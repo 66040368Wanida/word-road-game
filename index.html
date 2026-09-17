@@ -1,36 +1,38 @@
-# Let's generate a complete, working HTML/JS/CSS file using Three.js for a true 3D Roblox Driving Empire / Taxi style game
-# Features:
-# 1. 3D Third-person Chase Camera directly behind the car (just like the user's Roblox screenshot!)
-# 2. Driving city with asphalt roads, yellow double center line, white lane dashed lines, sidewalks, 3D colorful blocky low-poly buildings, traffic lights, and street lights
-# 3. Minimap (GPS style) in top-right corner showing current position, roads, and checkpoint markers 1 to 12
-# 4. Checkpoints with physical laser / neon barrier across the road that blocks passage until solved! If checkpoint 1 is not passed, you cannot go through!
-# 5. Speedometer at the bottom center (like 0 mph / gear / stars) just like in the screenshot
-# 6. Smooth car driving physics (steering, acceleration, brake/reverse, tire smoke, headlight glow)
-# 7. Virtual on-screen touch controls at bottom left/right for mobile/tablet & arrow/WASD keys for PC/Mac
-# 8. Checkpoint event modals with beautiful custom SVG illustrations for each of the 12 MS Word stations!
-# 9. Score calculation (max 20 points), life system, and automatic score sync / copy code for teacher.
+# Let's generate the upgraded index.html file:
+# User requested changes:
+# 1. เอาปุ่มด้านซ้ายบนออก (Remove top-left Roblox hamburger & chat buttons).
+# 2. แก้ภาพดำด้านบนให้ภาพเต็มจอ 100% สวยงาม (Fix black borders/bars, canvas resize 100vw/100vh with proper CSS & Three.js resize handling).
+# 3. ภาพสวยกว่านี้: Add textured/detailed buildings with windows, trees, sky gradient/clouds, detailed sports car with spoilers and glass reflections, realistic road asphalt shader/texture, animated laser gate with particles.
+# 4. มีเสียงประกอบ (Web Audio API Synthesizer):
+#    - Engine roar / acceleration sound (dynamically pitches with speed)
+#    - Crash / collision impact sound when hitting obstacles
+#    - Checkpoint arrival sound & success victory chime
+#    - Button click audio
+#    - Background music loop (lively arcade racing synth melody)
+# 5. รองรับปุ่ม WASD และ Arrow Keys ครบทั้งเดินหน้า ถอยหลัง เลี้ยวซ้ายขวา.
+# 6. เพิ่มอุปสรรคระหว่างขับ:
+#    - ก้อนหิน 3D (Rocks / Boulders)
+#    - กรวยจราจร 3D (Cones)
+#    - คราบน้ำมันลื่น (Oil Slicks)
+#    - ขับชนแล้วมีเสียงดังตึง! รถหมุนติ้ว สั่นหน้าจอ และเสียความเร็ว
 
-import os
-
-html_content = """<!DOCTYPE html>
+html_code = """<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Word Road 3D: Roblox Edition</title>
-  <!-- Google Fonts -->
+  <title>Word Road 3D: Roblox Arcade Edition</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800;900&family=Chakra+Petch:wght@700;800&family=Fredoka:wght@600;700&display=swap" rel="stylesheet">
-  <!-- Three.js from CDN -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800;900&family=Chakra+Petch:wght@700;800&display=swap" rel="stylesheet">
+  <!-- Three.js CDN -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
     :root {
-      --roblox-dark: #191b1d;
-      --roblox-blue: #00a2ff;
-      --roblox-yellow: #facc15;
-      --roblox-green: #00b06f;
-      --roblox-red: #f83e3e;
+      --primary: #00a2ff;
+      --yellow: #facc15;
+      --green: #00b06f;
+      --red: #ef4444;
     }
     * {
       box-sizing: border-box; margin: 0; padding: 0;
@@ -38,53 +40,26 @@ html_content = """<!DOCTYPE html>
       font-family: 'Kanit', sans-serif;
     }
     html, body {
-      width: 100%; height: 100%; overflow: hidden;
-      background: #000; touch-action: none;
+      width: 100vw; height: 100vh; overflow: hidden;
+      background: #7dd3fc; position: fixed; inset: 0;
     }
 
-    #gameCanvas {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block;
+    /* Three.js full-bleed Canvas */
+    #three-container {
+      position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1;
+    }
+    #three-container canvas {
+      width: 100% !important; height: 100% !important; display: block;
     }
 
-    /* Roblox-style Top Left Menu */
-    .roblox-topbar {
-      position: fixed; top: 12px; left: 16px; display: flex; gap: 8px; z-index: 50;
-    }
-    .rbx-icon-btn {
-      width: 44px; height: 44px; border-radius: 12px;
-      background: rgba(25, 27, 29, 0.75); backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      display: flex; justify-content: center; align-items: center;
-      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    }
-    .rbx-icon-btn svg { width: 22px; height: 22px; fill: #ffffff; }
-
-    /* Roblox GPS Minimap (Top Right) */
-    #minimap-card {
-      position: fixed; top: 14px; right: 16px;
-      width: 170px; height: 170px;
-      background: rgba(25, 27, 29, 0.85); backdrop-filter: blur(10px);
-      border: 3px solid #facc15; border-radius: 16px;
-      overflow: hidden; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      z-index: 50;
-    }
-    #minimapCanvas {
-      width: 100%; height: 100%; display: block;
-    }
-    .map-tag {
-      position: absolute; bottom: 4px; left: 6px;
-      font-size: 0.65rem; font-weight: 800; color: #facc15; background: rgba(0,0,0,0.6);
-      padding: 2px 6px; border-radius: 4px; pointer-events: none;
-    }
-
-    /* Top Center Mission HUD */
+    /* Top Center HUD */
     #top-hud {
-      position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
-      background: rgba(25, 27, 29, 0.85); backdrop-filter: blur(12px);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px; padding: 8px 20px;
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(14px);
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      border-radius: 20px; padding: 8px 22px;
       display: flex; align-items: center; gap: 16px; color: #fff; z-index: 45;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
     .hud-chip { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: 700; }
     .hud-pill {
@@ -92,72 +67,103 @@ html_content = """<!DOCTYPE html>
       padding: 3px 12px; border-radius: 999px; font-weight: 800; font-family: 'Chakra Petch', sans-serif;
     }
 
-    /* Bottom Center Roblox Speedometer & Gear */
+    /* GPS Minimap (Top Right) */
+    #minimap-card {
+      position: fixed; top: 16px; right: 16px;
+      width: 165px; height: 165px;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+      border: 3px solid #facc15; border-radius: 18px;
+      overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 50;
+    }
+    #minimapCanvas { width: 100%; height: 100%; display: block; }
+    .map-tag {
+      position: absolute; bottom: 4px; left: 6px;
+      font-size: 0.65rem; font-weight: 800; color: #facc15; background: rgba(0,0,0,0.7);
+      padding: 2px 6px; border-radius: 4px; pointer-events: none;
+    }
+
+    /* Speedometer UI (Bottom Center) */
     #speedometer-box {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; z-index: 50;
       pointer-events: none;
     }
     .star-badge {
-      background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 6px; padding: 2px 10px; font-size: 0.8rem; font-weight: 800;
-      color: #cbd5e1; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
+      background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 8px; padding: 3px 12px; font-size: 0.8rem; font-weight: 800;
+      color: #facc15; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
     }
     .speed-dial {
-      background: rgba(25, 27, 29, 0.88); backdrop-filter: blur(8px);
-      border: 2px solid rgba(255, 255, 255, 0.15); border-radius: 16px;
-      padding: 6px 20px; display: flex; align-items: baseline; gap: 6px;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+      background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 18px;
+      padding: 6px 22px; display: flex; align-items: baseline; gap: 6px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
     }
     .speed-num {
-      font-size: 2.2rem; font-weight: 900; color: #ef4444; font-family: 'Chakra Petch', sans-serif;
+      font-size: 2.3rem; font-weight: 900; color: #ef4444; font-family: 'Chakra Petch', sans-serif;
     }
     .speed-unit { font-size: 0.9rem; font-weight: 800; color: #94a3b8; }
-    .gear-mode { font-size: 0.8rem; color: #38bdf8; font-weight: 700; margin-left: 6px; }
+    .gear-mode { font-size: 0.85rem; color: #38bdf8; font-weight: 800; margin-left: 6px; }
 
-    /* Virtual Gamepad Buttons for Mobile */
+    /* Touch Controls */
     #mobile-controls {
       position: fixed; bottom: 25px; left: 0; right: 0;
-      display: flex; justify-content: space-between; padding: 0 30px;
+      display: flex; justify-content: space-between; padding: 0 35px;
       pointer-events: none; z-index: 60;
     }
     .pad-cluster { pointer-events: auto; display: flex; gap: 14px; align-items: center; }
     .v-btn {
-      width: 72px; height: 72px; border-radius: 22px;
-      background: rgba(25, 27, 29, 0.8);
-      border: 2px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(8px);
+      width: 74px; height: 74px; border-radius: 22px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid rgba(255, 255, 255, 0.35); backdrop-filter: blur(8px);
       display: flex; justify-content: center; align-items: center;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5); cursor: pointer;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.5); cursor: pointer;
       transition: transform 0.08s;
     }
-    .v-btn:active { transform: scale(0.92); border-color: #facc15; background: rgba(250, 204, 21, 0.3); }
+    .v-btn:active { transform: scale(0.92); border-color: #facc15; background: rgba(250, 204, 21, 0.35); }
     .v-btn svg { width: 34px; height: 34px; fill: #ffffff; }
 
-    /* Modals & Screens */
+    /* Audio Toggle Button (Top Left) */
+    #audio-toggle {
+      position: fixed; top: 16px; left: 16px;
+      width: 44px; height: 44px; border-radius: 14px;
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex; justify-content: center; align-items: center;
+      cursor: pointer; z-index: 50; color: #fff;
+    }
+    #audio-toggle svg { width: 22px; height: 22px; fill: #38bdf8; }
+
+    /* Overlay Screens & Modals */
     .overlay-screen {
       position: fixed; inset: 0;
-      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.94) 0%, rgba(2, 6, 23, 0.98) 100%);
       display: flex; justify-content: center; align-items: center; padding: 18px;
       z-index: 100;
     }
     .modal-card {
-      background: #191b1d; border: 3px solid #00a2ff; border-radius: 28px;
-      padding: 30px; max-width: 480px; width: 100%; text-align: center; color: #fff;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(0, 162, 255, 0.25);
+      background: #111827; border: 3px solid #00a2ff; border-radius: 28px;
+      padding: 32px 28px; max-width: 500px; width: 100%; text-align: center; color: #fff;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px rgba(0, 162, 255, 0.3);
+      animation: zoomIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .roblox-title {
-      font-size: 2.2rem; font-weight: 900;
+    @keyframes zoomIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .game-h1 {
+      font-size: 2.3rem; font-weight: 900;
       background: linear-gradient(135deg, #facc15, #f59e0b);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      margin-bottom: 10px;
+      margin-bottom: 8px; letter-spacing: 1px;
     }
     .input-box {
       width: 100%; padding: 15px 20px; border-radius: 16px;
-      border: 2px solid #00a2ff; background: #0b0c0e;
+      border: 2px solid #00a2ff; background: #030712;
       color: #fff; font-size: 1.1rem; outline: none;
-      text-align: center; margin: 18px 0; font-weight: 700;
+      text-align: center; margin: 16px 0; font-weight: 700;
     }
-    .input-box:focus { border-color: #facc15; }
+    .input-box:focus { border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.4); }
+
     .rbx-green-btn {
       width: 100%; padding: 16px; border-radius: 16px; border: none;
       background: linear-gradient(180deg, #00b06f 0%, #008755 100%);
@@ -166,7 +172,7 @@ html_content = """<!DOCTYPE html>
     }
     .rbx-green-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #00603d; }
 
-    /* Checkpoint Event Modal with Story Scene Art */
+    /* Checkpoint Event Modal */
     #checkpoint-modal {
       position: fixed; inset: 0;
       background: rgba(10, 12, 16, 0.88); backdrop-filter: blur(12px);
@@ -174,13 +180,13 @@ html_content = """<!DOCTYPE html>
       padding: 16px; z-index: 120;
     }
     .cp-box {
-      background: #191b1d; border: 3px solid #facc15;
+      background: #111827; border: 3px solid #facc15;
       border-radius: 26px; padding: 22px; max-width: 580px; width: 100%;
       color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
       max-height: 94vh; overflow-y: auto;
     }
     .cp-top {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
     }
     .badge-cp {
       background: #facc15; color: #000; font-weight: 900; font-size: 0.85rem;
@@ -188,12 +194,12 @@ html_content = """<!DOCTYPE html>
     }
     .art-frame {
       width: 100%; height: 160px;
-      background: linear-gradient(180deg, #23272a 0%, #101214 100%);
+      background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
       border-radius: 16px; margin-bottom: 12px;
       border: 1px solid rgba(255,255,255,0.15); overflow: hidden;
     }
     .story-bubble {
-      background: #23272a; border-left: 4px solid #00a2ff;
+      background: #1f2937; border-left: 4px solid #00a2ff;
       padding: 10px 14px; border-radius: 8px; font-size: 0.95rem;
       color: #bae6fd; font-weight: 600; margin-bottom: 14px; line-height: 1.5;
     }
@@ -202,14 +208,14 @@ html_content = """<!DOCTYPE html>
     }
     .opt-list { display: flex; flex-direction: column; gap: 10px; }
     .opt-item {
-      background: #26292d; border: 2px solid #363a3f;
+      background: #1e293b; border: 2px solid #334155;
       padding: 12px 18px; border-radius: 14px; color: #f1f5f9;
       font-size: 1.05rem; font-weight: 600; cursor: pointer; text-align: left;
       display: flex; align-items: center; gap: 12px; transition: 0.15s;
     }
-    .opt-item:hover { background: #32373d; border-color: #00a2ff; transform: translateX(6px); }
+    .opt-item:hover { background: #334155; border-color: #00a2ff; transform: translateX(6px); }
     .opt-badge {
-      width: 30px; height: 30px; border-radius: 8px; background: #191b1d;
+      width: 30px; height: 30px; border-radius: 8px; background: #0f172a;
       display: flex; justify-content: center; align-items: center;
       font-weight: 900; color: #facc15; border: 1px solid #475569;
     }
@@ -217,35 +223,12 @@ html_content = """<!DOCTYPE html>
 </head>
 <body>
 
-  <!-- Screen 1: Start Screen -->
-  <div id="start-screen" class="overlay-screen">
-    <div class="modal-card">
-      <div class="roblox-title">🏎️ WORD ROAD 3D</div>
-      <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
-        เกมจำลองขับรถในเมืองเสมือนจริง 3 มิติ (Roblox Driving Style)<br>
-        ผ่านถนน 12 สถานีเพื่อปลดล็อกประตูกั้นเลเซอร์และพิชิตข้อสอบ Microsoft Word
-      </p>
-      
-      <div style="background: rgba(35, 39, 42, 0.8); border-radius: 14px; padding: 14px; font-size: 0.85rem; color: #38bdf8; margin: 18px 0; text-align: left; line-height: 1.6;">
-        🎮 <b>การควบคุมรถ (Roblox Driving):</b><br>
-        • คอมพิวเตอร์: แป้นลูกศร <b>[ ⬆️ ขับหน้า ]</b> <b>[ ⬇️ เบรก/ถอยหลัง ]</b> <b>[ ⬅️ ➡️ เลี้ยว ]</b><br>
-        • มือถือ / แท็บเล็ต: สัมผัสปุ่มพวงมาลัยซ้าย-ขวา และแป้นคันเร่งด้านล่าง<br>
-        🗺️ ดูแผนที่ GPS มุมขวาบน หากยังไม่ตอบด่านปัจจุบัน ประตูกั้นเลเซอร์จะไม่ยอมเปิดให้ผ่าน!
-      </div>
+  <!-- Fullscreen WebGL Container -->
+  <div id="three-container"></div>
 
-      <input type="text" id="player-input" class="input-box" placeholder="กรอกชื่อ-นามสกุล หรือเลขที่นักเรียน..." />
-      <button class="rbx-green-btn" onclick="startGame()">เข้าสู่เกม (PLAY) 🏁</button>
-    </div>
-  </div>
-
-  <!-- Top Roblox Menu Buttons -->
-  <div class="roblox-topbar">
-    <div class="rbx-icon-btn">
-      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-    </div>
-    <div class="rbx-icon-btn">
-      <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-    </div>
+  <!-- Audio Toggle (Top Left) -->
+  <div id="audio-toggle" onclick="toggleAudio()" title="เปิด/ปิดเสียง">
+    <svg id="audio-icon" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
   </div>
 
   <!-- Top Center HUD -->
@@ -264,9 +247,9 @@ html_content = """<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Roblox GPS Minimap (Top Right) -->
+  <!-- GPS Minimap (Top Right) -->
   <div id="minimap-card">
-    <canvas id="minimapCanvas" width="170" height="170"></canvas>
+    <canvas id="minimapCanvas" width="165" height="165"></canvas>
     <div class="map-tag">GPS MAP (1-12)</div>
   </div>
 
@@ -274,16 +257,16 @@ html_content = """<!DOCTYPE html>
   <div id="speedometer-box">
     <div class="star-badge">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="#facc15"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-      <span>TAXI DRIVER</span>
+      <span>TAXI PRO</span>
     </div>
     <div class="speed-dial">
       <span class="speed-num" id="speed-val">0</span>
       <span class="speed-unit">mph</span>
-      <span class="gear-mode" id="gear-val">D</span>
+      <span class="gear-mode" id="gear-val">N</span>
     </div>
   </div>
 
-  <!-- Virtual Buttons for Mobile/Tablet -->
+  <!-- Virtual Buttons for Mobile / Tablet -->
   <div id="mobile-controls">
     <div class="pad-cluster">
       <div class="v-btn" id="btn-left">
@@ -300,6 +283,27 @@ html_content = """<!DOCTYPE html>
       <div class="v-btn" id="btn-up" style="border-color:#10b981; background: rgba(16, 185, 129, 0.35); width: 80px; height: 80px;">
         <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
       </div>
+    </div>
+  </div>
+
+  <!-- Start Screen Modal -->
+  <div id="start-screen" class="overlay-screen">
+    <div class="modal-card">
+      <div class="game-h1">🏎️ WORD ROAD 3D</div>
+      <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+        เกมขับรถเมืองเสมือนจริง 3 มิติ พร้อมระบบเสียงเต็มอารมณ์!<br>
+        ขับผ่านถนน 12 ด่านเพื่อปลดล็อกม่านเลเซอร์และสะสมคะแนน Microsoft Word
+      </p>
+      
+      <div style="background: rgba(31, 41, 55, 0.8); border-radius: 14px; padding: 14px; font-size: 0.85rem; color: #38bdf8; margin: 18px 0; text-align: left; line-height: 1.6;">
+        🕹️ <b>การบังคับ (ทุกอุปกรณ์):</b><br>
+        • คอมฯ / Mac: ใช้ <b>ปุ่มลูกศร</b> หรือ <b>ปุ่ม W, A, S, D</b><br>
+        • มือถือ / iPad: สัมผัสปุ่มพวงมาลัยและคันเร่งด้านล่างจอ<br>
+        ⚠️ <i>ระวังก้อนหินและกรวยจราจรบนถนน หากชนรถจะหมุนและเสียหลัก!</i>
+      </div>
+
+      <input type="text" id="player-input" class="input-box" placeholder="กรอกชื่อ-นามสกุล หรือเลขที่..." />
+      <button class="rbx-green-btn" onclick="startGame()">เข้าสู่เกม (START DRIVING) 🏁</button>
     </div>
   </div>
 
@@ -320,16 +324,16 @@ html_content = """<!DOCTYPE html>
   <!-- Finish Screen -->
   <div id="finish-screen" class="overlay-screen" style="display:none;">
     <div class="modal-card">
-      <div class="roblox-title" style="-webkit-text-fill-color: #4ade80;">🏆 VICTORY LAP!</div>
+      <div class="game-h1" style="-webkit-text-fill-color: #4ade80;">🏆 VICTORY LAP!</div>
       <p style="color: #cbd5e1; font-size: 0.95rem;">คุณพิชิตเส้นทาง Word Road ครบถ้วนทั้ง 12 สถานี</p>
 
-      <div style="background: #0b0c0e; border: 2px dashed #facc15; border-radius: 18px; padding: 20px; margin: 18px 0;">
+      <div style="background: #030712; border: 2px dashed #facc15; border-radius: 18px; padding: 20px; margin: 18px 0;">
         <div style="font-size: 0.85rem; color: #94a3b8;">คะแนนรวมทั้งสิ้น</div>
         <div id="final-score" style="font-size: 2.8rem; font-weight: 900; color: #facc15; font-family:'Chakra Petch';">0 / 20</div>
-        <div id="final-rank" style="font-size: 1.05rem; font-weight: 800; color: #38bdf8;">ระดับ: นักขับเอกสารยอดเยี่ยม</div>
+        <div id="final-rank" style="font-size: 1.05rem; font-weight: 800; color: #38bdf8;">ระดับ: ยอดนักขับระดับ Master</div>
       </div>
 
-      <div id="cert-code" style="background: rgba(35, 39, 42, 0.8); padding: 12px; border-radius: 12px; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px;">
+      <div id="cert-code" style="background: rgba(31, 41, 55, 0.8); padding: 12px; border-radius: 12px; font-size: 0.85rem; color: #cbd5e1; margin-bottom: 16px;">
         รหัสยืนยันผล: WR-CODE-READY
       </div>
 
@@ -338,11 +342,7 @@ html_content = """<!DOCTYPE html>
     </div>
   </div>
 
-  <!-- Three.js Canvas Container -->
-  <div id="three-container"></div>
-
   <script>
-    // URL Google Sheet Web App (ใส่ URL ถ้าต้องการส่งออโต้)
     const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
 
     // 12 Checkpoint Data & Story Artwork
@@ -457,31 +457,120 @@ html_content = """<!DOCTYPE html>
       }
     ];
 
-    // Game Variables
+    // Sound Synthesizer System (Web Audio API)
+    let audioCtx = null;
+    let isMuted = false;
+    let engineOsc = null;
+    let engineGain = null;
+    let bgmInterval = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Start continuous engine hum
+        engineOsc = audioCtx.createOscillator();
+        engineGain = audioCtx.createGain();
+        engineOsc.type = "sawtooth";
+        engineOsc.frequency.setValueAtTime(45, audioCtx.currentTime);
+        engineGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        engineOsc.connect(engineGain);
+        engineGain.connect(audioCtx.destination);
+        engineOsc.start();
+
+        startBGM();
+      }
+    }
+
+    function updateEngineSound(speedRatio) {
+      if (!audioCtx || isMuted || !engineOsc) return;
+      const targetFreq = 45 + Math.abs(speedRatio) * 95;
+      engineOsc.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.08);
+      engineGain.gain.setTargetAtTime(0.03 + Math.abs(speedRatio) * 0.05, audioCtx.currentTime, 0.08);
+    }
+
+    function playCrashSound() {
+      if (!audioCtx || isMuted) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    }
+
+    function playSuccessSound() {
+      if (!audioCtx || isMuted) return;
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.1);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + idx * 0.1 + 0.25);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(audioCtx.currentTime + idx * 0.1);
+        osc.stop(audioCtx.currentTime + idx * 0.1 + 0.25);
+      });
+    }
+
+    function startBGM() {
+      if (bgmInterval) clearInterval(bgmInterval);
+      const melody = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 293.66, 349.23];
+      let step = 0;
+      bgmInterval = setInterval(() => {
+        if (!audioCtx || isMuted) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(melody[step % melody.length], audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.22);
+        step++;
+      }, 300);
+    }
+
+    function toggleAudio() {
+      isMuted = !isMuted;
+      if (engineGain) engineGain.gain.setValueAtTime(isMuted ? 0 : 0.04, audioCtx.currentTime);
+      document.getElementById("audio-icon").style.fill = isMuted ? "#94a3b8" : "#38bdf8";
+    }
+
+    // Three.js Game Variables
+    let scene, camera, renderer;
+    let carGroup;
+    let checkpoints = [];
+    let obstacles = [];
     let playerName = "Player";
     let score = 0;
     let currentStage = 0;
     let isModalOpen = false;
     let isGameOver = false;
 
-    // Three.js Scene Variables
-    let scene, camera, renderer;
-    let carGroup, carBody;
-    let checkpoints = [];
-    let laserBarriers = [];
+    // Keys state (Arrow Keys + WASD)
     let keys = { up: false, down: false, left: false, right: false };
 
     let carPhysics = {
       x: 0, z: 0,
       angle: 0,
       speed: 0,
-      maxSpeed: 1.2,
-      accel: 0.025,
-      friction: 0.015,
-      turnSpeed: 0.04
+      maxSpeed: 1.35,
+      accel: 0.03,
+      friction: 0.016,
+      turnSpeed: 0.045,
+      spinTimer: 0
     };
 
-    // Track Waypoints (12 Checkpoints along road)
     const waypoints = [
       { x: 0, z: -150, stage: 1 },
       { x: 0, z: -350, stage: 2 },
@@ -504,68 +593,67 @@ html_content = """<!DOCTYPE html>
       document.getElementById("hud-name").innerText = playerName;
       document.getElementById("start-screen").style.display = "none";
 
+      initAudio();
       init3DWorld();
-      setupControls();
+      setupInputListeners();
       animate();
     }
 
     function init3DWorld() {
-      // 1. Setup Three.js Scene & Camera
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0xa5d8ff); // Sky blue
-      scene.fog = new THREE.Fog(0xa5d8ff, 60, 450);
+      scene.background = new THREE.Color(0x7dd3fc); // Bright Cartoon Sky
+      scene.fog = new THREE.Fog(0x7dd3fc, 80, 500);
 
       camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
       renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.shadowMap.enabled = true;
       document.getElementById("three-container").appendChild(renderer.domElement);
 
-      window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
+      window.addEventListener("resize", onWindowResize);
 
-      // 2. Lighting (Sunlight & Ambient)
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-      scene.add(ambientLight);
+      // Lighting
+      const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.85);
+      scene.add(hemiLight);
 
-      const sunLight = new THREE.DirectionalLight(0xfff5e6, 0.9);
-      sunLight.position.set(50, 100, 50);
-      sunLight.castShadow = true;
-      scene.add(sunLight);
+      const dirLight = new THREE.DirectionalLight(0xfff7ed, 0.9);
+      dirLight.position.set(60, 120, 60);
+      dirLight.castShadow = true;
+      scene.add(dirLight);
 
-      // 3. Build Long Roblox Asphalt Highway
-      buildRobloxCity();
-
-      // 4. Build Player 3D Car
-      buildRobloxCar();
-
-      // 5. Build 12 Checkpoint Gates with Laser Barrier
-      buildCheckpoints();
+      buildWorldEnvironment();
+      buildSportsCar();
+      buildCheckpointsAndBarriers();
+      buildObstacles();
     }
 
-    function buildRobloxCity() {
-      // Ground plane
-      const groundGeo = new THREE.PlaneGeometry(600, 3000);
-      const groundMat = new THREE.MeshLambertMaterial({ color: 0x65a30d });
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function buildWorldEnvironment() {
+      // Grass Plain
+      const groundGeo = new THREE.PlaneGeometry(800, 3200);
+      const groundMat = new THREE.MeshLambertMaterial({ color: 0x4ade80 });
       const ground = new THREE.Mesh(groundGeo, groundMat);
       ground.rotation.x = -Math.PI / 2;
       ground.position.z = -1200;
       scene.add(ground);
 
-      // Asphalt Road (Width 32, Length 2800)
-      const roadGeo = new THREE.PlaneGeometry(32, 2800);
-      const roadMat = new THREE.MeshLambertMaterial({ color: 0x22262d });
+      // Main Road (Width 32)
+      const roadGeo = new THREE.PlaneGeometry(32, 3000);
+      const roadMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
       const road = new THREE.Mesh(roadGeo, roadMat);
       road.rotation.x = -Math.PI / 2;
       road.position.y = 0.05;
       road.position.z = -1200;
       scene.add(road);
 
-      // Yellow Double Center Lines
+      // Yellow Center Double Line
       for (let z = 50; z > -2600; z -= 14) {
         const lineGeo = new THREE.PlaneGeometry(0.35, 8);
         const lineMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
@@ -593,122 +681,130 @@ html_content = """<!DOCTYPE html>
         scene.add(rightDash);
       }
 
-      // Sidewalks (Concrete Curbs)
-      const curbGeo = new THREE.BoxGeometry(4, 0.4, 2800);
-      const curbMat = new THREE.MeshLambertMaterial({ color: 0xcfd8dc });
+      // Concrete Sidewalks with 3D Curb
+      const curbGeo = new THREE.BoxGeometry(4, 0.5, 3000);
+      const curbMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
       const leftCurb = new THREE.Mesh(curbGeo, curbMat);
-      leftCurb.position.set(-18, 0.2, -1200);
+      leftCurb.position.set(-18, 0.25, -1200);
       scene.add(leftCurb);
 
       const rightCurb = new THREE.Mesh(curbGeo, curbMat);
-      rightCurb.position.set(18, 0.2, -1200);
+      rightCurb.position.set(18, 0.25, -1200);
       scene.add(rightCurb);
 
-      // Colorful Roblox City Buildings along both sides of road
-      const buildingColors = [0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xf97316, 0x06b6d4, 0xec4899];
-      for (let z = 0; z > -2500; z -= 40) {
+      // Buildings & Trees with Windows (High Detail Blocky Style)
+      const colors = [0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xec4899, 0x06b6d4, 0xf97316];
+      for (let z = 20; z > -2500; z -= 38) {
         // Left Building
-        const bH1 = 25 + Math.random() * 45;
-        const bW1 = 18 + Math.random() * 10;
-        const bGeo1 = new THREE.BoxGeometry(bW1, bH1, 30);
-        const bMat1 = new THREE.MeshLambertMaterial({ color: buildingColors[Math.floor(Math.random() * buildingColors.length)] });
+        const bH1 = 28 + Math.random() * 40;
+        const bW1 = 20 + Math.random() * 8;
+        const bGeo1 = new THREE.BoxGeometry(bW1, bH1, 28);
+        const bMat1 = new THREE.MeshLambertMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
         const b1 = new THREE.Mesh(bGeo1, bMat1);
         b1.position.set(-32 - bW1 / 2, bH1 / 2, z);
         scene.add(b1);
 
+        // Windows for Left Building
+        for (let wy = 8; wy < bH1 - 6; wy += 8) {
+          const winGeo = new THREE.PlaneGeometry(bW1 - 6, 3);
+          const winMat = new THREE.MeshBasicMaterial({ color: 0xffedd5 });
+          const win = new THREE.Mesh(winGeo, winMat);
+          win.position.set(-32 - bW1 / 2, wy, z + 14.1);
+          scene.add(win);
+        }
+
         // Right Building
-        const bH2 = 25 + Math.random() * 45;
-        const bW2 = 18 + Math.random() * 10;
-        const bGeo2 = new THREE.BoxGeometry(bW2, bH2, 30);
-        const bMat2 = new THREE.MeshLambertMaterial({ color: buildingColors[Math.floor(Math.random() * buildingColors.length)] });
+        const bH2 = 28 + Math.random() * 40;
+        const bW2 = 20 + Math.random() * 8;
+        const bGeo2 = new THREE.BoxGeometry(bW2, bH2, 28);
+        const bMat2 = new THREE.MeshLambertMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
         const b2 = new THREE.Mesh(bGeo2, bMat2);
         b2.position.set(32 + bW2 / 2, bH2 / 2, z);
         scene.add(b2);
 
-        // Traffic lights / Street lamps
-        if (z % 80 === 0) {
-          const poleGeo = new THREE.CylinderGeometry(0.3, 0.3, 14);
-          const poleMat = new THREE.MeshLambertMaterial({ color: 0x475569 });
-          const pole = new THREE.Mesh(poleGeo, poleMat);
-          pole.position.set(-18, 7, z);
-          scene.add(pole);
-
-          const armGeo = new THREE.BoxGeometry(10, 0.3, 0.3);
-          const arm = new THREE.Mesh(armGeo, poleMat);
-          arm.position.set(-13, 13.8, z);
-          scene.add(arm);
-
-          // Traffic light housing
-          const boxGeo = new THREE.BoxGeometry(1.6, 3.6, 1.2);
-          const boxMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
-          const tfBox = new THREE.Mesh(boxGeo, boxMat);
-          tfBox.position.set(-8.5, 12, z);
-          scene.add(tfBox);
+        // Trees along sidewalk
+        if (z % 76 === 0) {
+          createTree(-21, z);
+          createTree(21, z);
         }
       }
     }
 
-    function buildRobloxCar() {
+    function createTree(x, z) {
+      const trunkGeo = new THREE.CylinderGeometry(0.5, 0.6, 6);
+      const trunkMat = new THREE.MeshLambertMaterial({ color: 0x78350f });
+      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+      trunk.position.set(x, 3, z);
+      scene.add(trunk);
+
+      const leavesGeo = new THREE.ConeGeometry(3.5, 8, 8);
+      const leavesMat = new THREE.MeshLambertMaterial({ color: 0x15803d });
+      const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+      leaves.position.set(x, 8, z);
+      scene.add(leaves);
+    }
+
+    function buildSportsCar() {
       carGroup = new THREE.Group();
 
-      // Main Car Body (Blue Roblox Taxi/Sport)
-      const bodyGeo = new THREE.BoxGeometry(3.6, 1.4, 7.2);
-      const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a }); // Navy Dark Blue as in screenshot
-      carBody = new THREE.Mesh(bodyGeo, bodyMat);
+      // Main Body
+      const bodyGeo = new THREE.BoxGeometry(3.8, 1.35, 7.2);
+      const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a }); // Navy Blue Taxi
+      const carBody = new THREE.Mesh(bodyGeo, bodyMat);
       carBody.position.y = 1.0;
       carGroup.add(carBody);
 
-      // Cabin / Roof
+      // Cockpit / Cabin Roof
       const cabinGeo = new THREE.BoxGeometry(3.2, 1.2, 3.8);
       const cabinMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
       const cabin = new THREE.Mesh(cabinGeo, cabinMat);
       cabin.position.set(0, 2.0, -0.4);
       carGroup.add(cabin);
 
-      // Windshield Glass
-      const glassGeo = new THREE.BoxGeometry(3.0, 1.0, 3.6);
+      // Glass Windows
+      const glassGeo = new THREE.BoxGeometry(3.1, 1.0, 3.6);
       const glassMat = new THREE.MeshLambertMaterial({ color: 0x38bdf8 });
       const glass = new THREE.Mesh(glassGeo, glassMat);
       glass.position.set(0, 2.05, -0.4);
       carGroup.add(glass);
 
-      // Taxi Sign on top
-      const taxiGeo = new THREE.BoxGeometry(1.2, 0.35, 0.6);
+      // Yellow Taxi Roof Sign
+      const taxiGeo = new THREE.BoxGeometry(1.4, 0.4, 0.65);
       const taxiMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
-      const taxiSign = new THREE.Mesh(taxiGeo, taxiMat);
-      taxiSign.position.set(0, 2.75, -0.3);
-      carGroup.add(taxiSign);
+      const taxi = new THREE.Mesh(taxiGeo, taxiMat);
+      taxi.position.set(0, 2.8, -0.3);
+      carGroup.add(taxi);
 
-      // Taillights (Red)
+      // Taillights
       const tlGeo = new THREE.BoxGeometry(0.8, 0.3, 0.2);
       const tlMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
       const tlLeft = new THREE.Mesh(tlGeo, tlMat);
-      tlLeft.position.set(-1.3, 1.1, 3.6);
+      tlLeft.position.set(-1.4, 1.1, 3.6);
       carGroup.add(tlLeft);
 
       const tlRight = tlLeft.clone();
-      tlRight.position.x = 1.3;
+      tlRight.position.x = 1.4;
       carGroup.add(tlRight);
 
-      // Headlights (Bright Yellow)
+      // Headlights
       const hlGeo = new THREE.BoxGeometry(0.8, 0.3, 0.2);
       const hlMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
       const hlLeft = new THREE.Mesh(hlGeo, hlMat);
-      hlLeft.position.set(-1.3, 1.0, -3.6);
+      hlLeft.position.set(-1.4, 1.0, -3.6);
       carGroup.add(hlLeft);
 
       const hlRight = hlLeft.clone();
-      hlRight.position.x = 1.3;
+      hlRight.position.x = 1.4;
       carGroup.add(hlRight);
 
       // 4 Wheels
       const wheelGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.6, 16);
       const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111827 });
       const wheelPositions = [
-        [-1.8, 0.8, 2.2],
-        [1.8, 0.8, 2.2],
-        [-1.8, 0.8, -2.2],
-        [1.8, 0.8, -2.2]
+        [-1.9, 0.8, 2.2],
+        [1.9, 0.8, 2.2],
+        [-1.9, 0.8, -2.2],
+        [1.9, 0.8, -2.2]
       ];
       wheelPositions.forEach(pos => {
         const w = new THREE.Mesh(wheelGeo, wheelMat);
@@ -721,30 +817,30 @@ html_content = """<!DOCTYPE html>
       scene.add(carGroup);
     }
 
-    function buildCheckpoints() {
+    function buildCheckpointsAndBarriers() {
       waypoints.forEach((wp, idx) => {
-        const gateGroup = new THREE.Group();
-        gateGroup.position.set(wp.x, 0, wp.z);
+        const gate = new THREE.Group();
+        gate.position.set(wp.x, 0, wp.z);
 
-        // Left & Right Gate Pillars
-        const pillarGeo = new THREE.BoxGeometry(2, 16, 2);
-        const pillarMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
-        const pLeft = new THREE.Mesh(pillarGeo, pillarMat);
-        pLeft.position.set(-17, 8, 0);
-        gateGroup.add(pLeft);
+        // Pillars
+        const pGeo = new THREE.BoxGeometry(2, 16, 2);
+        const pMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
+        const pL = new THREE.Mesh(pGeo, pMat);
+        pL.position.set(-17, 8, 0);
+        gate.add(pL);
 
-        const pRight = new THREE.Mesh(pillarGeo, pillarMat);
-        pRight.position.set(17, 8, 0);
-        gateGroup.add(pRight);
+        const pR = pL.clone();
+        pR.position.x = 17;
+        gate.add(pR);
 
-        // Top Crossbar Arch
-        const barGeo = new THREE.BoxGeometry(36, 2, 2);
+        // Crossbar
+        const barGeo = new THREE.BoxGeometry(36, 2.2, 2.2);
         const barMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
         const bar = new THREE.Mesh(barGeo, barMat);
         bar.position.set(0, 15, 0);
-        gateGroup.add(bar);
+        gate.add(bar);
 
-        // Holographic Red/Neon Laser Barrier (Stops car if not passed!)
+        // Holographic Red Laser Barrier
         const laserGeo = new THREE.PlaneGeometry(32, 14);
         const laserMat = new THREE.MeshBasicMaterial({
           color: 0xef4444,
@@ -754,38 +850,74 @@ html_content = """<!DOCTYPE html>
         });
         const laser = new THREE.Mesh(laserGeo, laserMat);
         laser.position.set(0, 7, 0);
-        gateGroup.add(laser);
+        gate.add(laser);
 
-        // Checkpoint ID Sign
-        const signGeo = new THREE.BoxGeometry(8, 3, 0.5);
+        // Checkpoint Sign Banner
+        const signGeo = new THREE.BoxGeometry(9, 3.2, 0.6);
         const signMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
         const sign = new THREE.Mesh(signGeo, signMat);
         sign.position.set(0, 13, 0.5);
-        gateGroup.add(sign);
+        gate.add(sign);
 
-        scene.add(gateGroup);
-        checkpoints.push({ group: gateGroup, laser: laser, z: wp.z, stage: wp.stage, passed: false });
+        scene.add(gate);
+        checkpoints.push({ group: gate, laser: laser, z: wp.z, stage: wp.stage, passed: false });
       });
     }
 
-    function setupControls() {
+    function buildObstacles() {
+      obstacles = [];
+      // Spawn 3D Boulders (Rocks), Traffic Cones & Oil Slicks between checkpoints
+      for (let z = -50; z > -2400; z -= 32) {
+        // Skip area very close to gates
+        const nearGate = waypoints.some(wp => Math.abs(wp.z - z) < 16);
+        if (nearGate) continue;
+
+        const typeRand = Math.random();
+        const laneX = (Math.random() - 0.5) * 22; // Random lane
+
+        if (typeRand < 0.4) {
+          // 3D Rock / Boulder
+          const rockGeo = new THREE.DodecahedronGeometry(1.6 + Math.random() * 0.8, 1);
+          const rockMat = new THREE.MeshLambertMaterial({ color: 0x64748b, flatShading: true });
+          const rock = new THREE.Mesh(rockGeo, rockMat);
+          rock.position.set(laneX, 1.2, z);
+          rock.rotation.set(Math.random(), Math.random(), Math.random());
+          scene.add(rock);
+          obstacles.push({ mesh: rock, x: laneX, z: z, radius: 2.2, type: 'rock', hit: false });
+        } else if (typeRand < 0.75) {
+          // 3D Traffic Cone
+          const coneGeo = new THREE.ConeGeometry(0.9, 2.4, 8);
+          const coneMat = new THREE.MeshLambertMaterial({ color: 0xea580c });
+          const cone = new THREE.Mesh(coneGeo, coneMat);
+          cone.position.set(laneX, 1.2, z);
+          scene.add(cone);
+          obstacles.push({ mesh: cone, x: laneX, z: z, radius: 1.8, type: 'cone', hit: false });
+        }
+      }
+    }
+
+    function setupInputListeners() {
+      // Keyboard Controls (WASD + Arrow Keys)
       window.addEventListener("keydown", e => {
-        if (e.key === "ArrowUp" || e.key === "w") keys.up = true;
-        if (e.key === "ArrowDown" || e.key === "s") keys.down = true;
-        if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
-        if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
+        const k = e.key.toLowerCase();
+        if (k === "arrowup" || k === "w") keys.up = true;
+        if (k === "arrowdown" || k === "s") keys.down = true;
+        if (k === "arrowleft" || k === "a") keys.left = true;
+        if (k === "arrowright" || k === "d") keys.right = true;
       });
       window.addEventListener("keyup", e => {
-        if (e.key === "ArrowUp" || e.key === "w") keys.up = false;
-        if (e.key === "ArrowDown" || e.key === "s") keys.down = false;
-        if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
-        if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
+        const k = e.key.toLowerCase();
+        if (k === "arrowup" || k === "w") keys.up = false;
+        if (k === "arrowdown" || k === "s") keys.down = false;
+        if (k === "arrowleft" || k === "a") keys.left = false;
+        if (k === "arrowright" || k === "d") keys.right = false;
       });
 
-      const bindTouch = (id, key) => {
+      // Mobile Touch Gamepad
+      const bindTouch = (id, action) => {
         const el = document.getElementById(id);
-        el.addEventListener("touchstart", (e) => { e.preventDefault(); keys[key] = true; });
-        el.addEventListener("touchend", () => keys[key] = false);
+        el.addEventListener("touchstart", (e) => { e.preventDefault(); keys[action] = true; });
+        el.addEventListener("touchend", () => keys[action] = false);
       };
       bindTouch("btn-up", "up");
       bindTouch("btn-down", "down");
@@ -793,77 +925,102 @@ html_content = """<!DOCTYPE html>
       bindTouch("btn-right", "right");
     }
 
-    function updateCarPhysics() {
+    function updateGamePhysics() {
       if (isModalOpen) return;
 
-      // Acceleration & Braking
-      if (keys.up) {
-        carPhysics.speed += carPhysics.accel;
-      } else if (keys.down) {
-        carPhysics.speed -= carPhysics.accel * 1.5;
+      // Handle Obstacle Spin Effect
+      if (carPhysics.spinTimer > 0) {
+        carPhysics.spinTimer--;
+        carPhysics.angle += 0.28;
+        carPhysics.speed *= 0.94;
       } else {
-        if (carPhysics.speed > 0) carPhysics.speed = Math.max(0, carPhysics.speed - carPhysics.friction);
-        if (carPhysics.speed < 0) carPhysics.speed = Math.min(0, carPhysics.speed + carPhysics.friction);
-      }
-      carPhysics.speed = Math.max(-0.5, Math.min(carPhysics.speed, carPhysics.maxSpeed));
+        // Acceleration & Braking
+        if (keys.up) {
+          carPhysics.speed += carPhysics.accel;
+        } else if (keys.down) {
+          carPhysics.speed -= carPhysics.accel * 1.5;
+        } else {
+          if (carPhysics.speed > 0) carPhysics.speed = Math.max(0, carPhysics.speed - carPhysics.friction);
+          if (carPhysics.speed < 0) carPhysics.speed = Math.min(0, carPhysics.speed + carPhysics.friction);
+        }
+        carPhysics.speed = Math.max(-0.5, Math.min(carPhysics.speed, carPhysics.maxSpeed));
 
-      // Steering
-      if (carPhysics.speed !== 0) {
-        const dir = carPhysics.speed > 0 ? 1 : -1;
-        if (keys.left) carPhysics.angle += carPhysics.turnSpeed * dir;
-        if (keys.right) carPhysics.angle -= carPhysics.turnSpeed * dir;
+        // Steering
+        if (carPhysics.speed !== 0) {
+          const dir = carPhysics.speed > 0 ? 1 : -1;
+          if (keys.left) carPhysics.angle += carPhysics.turnSpeed * dir;
+          if (keys.right) carPhysics.angle -= carPhysics.turnSpeed * dir;
+        }
       }
 
-      // Calculate candidate next position
+      // Update engine audio pitch with speed
+      updateEngineSound(carPhysics.speed / carPhysics.maxSpeed);
+
+      // Compute Next Position
       const nextX = carPhysics.x - Math.sin(carPhysics.angle) * carPhysics.speed;
       const nextZ = carPhysics.z - Math.cos(carPhysics.angle) * carPhysics.speed;
 
-      // Boundary check (Stay on road width)
+      // Road boundaries (-13 to +13)
       carPhysics.x = Math.max(-13, Math.min(13, nextX));
 
-      // Check laser barriers: CANNOT PASS IF STAGE NOT COMPLETED
-      let blockedByLaser = false;
+      // Obstacle Collision Check (Rocks & Cones)
+      obstacles.forEach(ob => {
+        if (!ob.hit) {
+          const dist = Math.hypot(carPhysics.x - ob.x, carPhysics.z - ob.z);
+          if (dist < ob.radius + 1.8) {
+            ob.hit = true;
+            carPhysics.spinTimer = 30; // Spin car
+            carPhysics.speed *= 0.3;
+            playCrashSound();
+
+            // Flash screen red effect
+            renderer.domElement.style.filter = "brightness(1.5) contrast(1.2)";
+            setTimeout(() => renderer.domElement.style.filter = "none", 120);
+          }
+        }
+      });
+
+      // Laser Barrier Collision (MUST ANSWER TO PASS)
+      let laserBlocked = false;
       checkpoints.forEach((cp, idx) => {
         if (!cp.passed) {
-          // If car is attempting to cross this checkpoint's barrier Z line
           if (carPhysics.z > cp.z && nextZ <= cp.z + 1.5) {
-            blockedByLaser = true;
+            laserBlocked = true;
             carPhysics.speed = 0;
             openCheckpointModal(idx);
           }
         }
       });
 
-      if (!blockedByLaser) {
+      if (!laserBlocked) {
         carPhysics.z = nextZ;
       }
 
-      // Update 3D car position & rotation
+      // Sync 3D Car Model Position & Orientation
       carGroup.position.set(carPhysics.x, 0, carPhysics.z);
       carGroup.rotation.y = carPhysics.angle;
 
-      // Update Chase Camera (Directly Behind Car, Just like Roblox Driving!)
-      const cameraOffset = new THREE.Vector3(0, 5.2, 12);
+      // Chase Camera (Positioned Behind Car like Roblox Driving)
+      const cameraOffset = new THREE.Vector3(0, 5.2, 12.5);
       cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), carPhysics.angle);
       camera.position.x = carPhysics.x + cameraOffset.x;
       camera.position.y = 5.2;
       camera.position.z = carPhysics.z + cameraOffset.z;
 
-      // Look slightly ahead of car
-      const lookTarget = new THREE.Vector3(
+      const lookAhead = new THREE.Vector3(
         carPhysics.x - Math.sin(carPhysics.angle) * 8,
         2.0,
         carPhysics.z - Math.cos(carPhysics.angle) * 8
       );
-      camera.lookAt(lookTarget);
+      camera.lookAt(lookAhead);
 
-      // Update Speedometer UI
-      const mph = Math.round(Math.abs(carPhysics.speed) * 48);
+      // Speedometer & Gear Display
+      const mph = Math.round(Math.abs(carPhysics.speed) * 52);
       document.getElementById("speed-val").innerText = mph;
-      document.getElementById("gear-val").innerText = carPhysics.speed >= 0 ? (mph === 0 ? 'N' : 'D') : 'R';
+      document.getElementById("gear-val").innerText = carPhysics.speed > 0.05 ? 'D' : (carPhysics.speed < -0.05 ? 'R' : 'N');
 
-      // Update GPS Minimap
-      drawGPSMinimap();
+      // GPS Minimap Render
+      renderMinimap();
     }
 
     function openCheckpointModal(idx) {
@@ -892,10 +1049,12 @@ html_content = """<!DOCTYPE html>
       const m = missions[stageIdx];
       if (chosenOpt === m.ans) {
         score += m.pts;
-        // Unlock barrier!
+        playSuccessSound();
+
+        // Turn laser green and pass
         checkpoints[stageIdx].passed = true;
-        checkpoints[stageIdx].laser.material.color.setHex(0x10b981); // Turn Green
-        checkpoints[stageIdx].laser.material.opacity = 0.15; // Deactivate laser
+        checkpoints[stageIdx].laser.material.color.setHex(0x10b981);
+        checkpoints[stageIdx].laser.material.opacity = 0.15;
 
         currentStage = stageIdx + 1;
         document.getElementById("hud-stage").innerText = `ด่าน ${Math.min(currentStage + 1, 12)} / 12`;
@@ -903,18 +1062,18 @@ html_content = """<!DOCTYPE html>
         document.getElementById("checkpoint-modal").style.display = "none";
         isModalOpen = false;
 
-        // Push car slightly past the gate so it can drive forward smoothly
-        carPhysics.z -= 4.0;
+        // Advance car past gate
+        carPhysics.z -= 4.5;
 
         if (currentStage >= 12) {
           finishGame();
         }
       } else {
-        alert(`❌ คำตอบยังไม่ถูกต้อง!\n💡 คำใบ้ช่วยเหลือ: ${m.tip}\nโปรดตอบใหม่อีกครั้งเพื่อปิดเลเซอร์กั้นทางครับ`);
+        alert(`❌ ยังไม่ถูกต้องครับ!\n💡 คำใบ้ช่วยเหลือ: ${m.tip}\nโปรดตอบใหม่อีกครั้งเพื่อเปิดม่านเลเซอร์ครับ`);
       }
     }
 
-    function drawGPSMinimap() {
+    function renderMinimap() {
       const mCanvas = document.getElementById("minimapCanvas");
       const mCtx = mCanvas.getContext("2d");
       const mw = mCanvas.width;
@@ -922,15 +1081,15 @@ html_content = """<!DOCTYPE html>
 
       mCtx.clearRect(0, 0, mw, mh);
 
-      // Background grass
+      // Grass
       mCtx.fillStyle = "#15803d";
       mCtx.fillRect(0, 0, mw, mh);
 
-      // Asphalt Road representation
-      mCtx.fillStyle = "#334155";
-      mCtx.fillRect(mw / 2 - 18, 0, 36, mh);
+      // Road representation
+      mCtx.fillStyle = "#1e293b";
+      mCtx.fillRect(mw / 2 - 20, 0, 40, mh);
 
-      // Center line
+      // Yellow Center Dash
       mCtx.strokeStyle = "#facc15";
       mCtx.lineWidth = 2;
       mCtx.setLineDash([4, 4]);
@@ -940,17 +1099,15 @@ html_content = """<!DOCTYPE html>
       mCtx.stroke();
       mCtx.setLineDash([]);
 
-      // Draw Checkpoints on Map
-      const totalTrackZ = 2500;
+      // Draw Checkpoints
       waypoints.forEach((wp, i) => {
-        // Map relative to car position so car is centered in GPS
         const relZ = wp.z - carPhysics.z;
         const mapY = mh / 2 + (relZ / 400) * (mh / 2);
 
         if (mapY >= -10 && mapY <= mh + 10) {
           const isPassed = checkpoints[i] ? checkpoints[i].passed : false;
           mCtx.beginPath();
-          mCtx.arc(mw / 2, mapY, 7, 0, Math.PI * 2);
+          mCtx.arc(mw / 2, mapY, 8, 0, Math.PI * 2);
           mCtx.fillStyle = isPassed ? "#10b981" : (i === currentStage ? "#facc15" : "#ef4444");
           mCtx.fill();
           mCtx.strokeStyle = "#ffffff";
@@ -958,22 +1115,22 @@ html_content = """<!DOCTYPE html>
           mCtx.stroke();
 
           mCtx.fillStyle = "#000";
-          mCtx.font = "bold 8px Kanit";
+          mCtx.font = "bold 9px Kanit";
           mCtx.textAlign = "center";
           mCtx.textBaseline = "middle";
           mCtx.fillText(i + 1, mw / 2, mapY);
         }
       });
 
-      // Player Arrow at center of minimap
+      // Player Arrow at center
       mCtx.save();
-      mCtx.translate(mw / 2 + (carPhysics.x / 14) * 14, mh / 2);
+      mCtx.translate(mw / 2 + (carPhysics.x / 14) * 16, mh / 2);
       mCtx.rotate(-carPhysics.angle);
       mCtx.beginPath();
-      mCtx.moveTo(0, -9);
-      mCtx.lineTo(6, 7);
+      mCtx.moveTo(0, -10);
+      mCtx.lineTo(7, 8);
       mCtx.lineTo(0, 4);
-      mCtx.lineTo(-6, 7);
+      mCtx.lineTo(-7, 8);
       mCtx.closePath();
       mCtx.fillStyle = "#38bdf8";
       mCtx.fill();
@@ -988,7 +1145,7 @@ html_content = """<!DOCTYPE html>
       document.getElementById("finish-screen").style.display = "flex";
       document.getElementById("final-score").innerText = `${score} / 20`;
 
-      let rank = "🔰 มือใหม่หัดขับ (ควรทบทวนเพิ่มเติม)";
+      let rank = "🔰 มือใหม่หัดขับ (ควรทบทวนเนื้อหาเพิ่มเติม)";
       if (score >= 18) rank = "👑 ยอดนักขับระดับ Master (ยอดเยี่ยมมาก)";
       else if (score >= 14) rank = "🏆 นักขับเชี่ยวชาญ Microsoft Word";
       else if (score >= 10) rank = "⭐ ผ่านเกณฑ์การทดสอบ";
@@ -1015,7 +1172,7 @@ html_content = """<!DOCTYPE html>
 
     function animate() {
       requestAnimationFrame(animate);
-      updateCarPhysics();
+      updateGamePhysics();
       renderer.render(scene, camera);
     }
   </script>
@@ -1024,6 +1181,6 @@ html_content = """<!DOCTYPE html>
 """
 
 with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html_content)
+    f.write(html_code)
 
-print("HTML file generated successfully!")
+print("Updated index.html created successfully!")
