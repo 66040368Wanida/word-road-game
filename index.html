@@ -1,22 +1,15 @@
-# Let's generate the upgraded index.html file:
-# User requested changes:
-# 1. เอาปุ่มด้านซ้ายบนออก (Remove top-left Roblox hamburger & chat buttons).
-# 2. แก้ภาพดำด้านบนให้ภาพเต็มจอ 100% สวยงาม (Fix black borders/bars, canvas resize 100vw/100vh with proper CSS & Three.js resize handling).
-# 3. ภาพสวยกว่านี้: Add textured/detailed buildings with windows, trees, sky gradient/clouds, detailed sports car with spoilers and glass reflections, realistic road asphalt shader/texture, animated laser gate with particles.
-# 4. มีเสียงประกอบ (Web Audio API Synthesizer):
-#    - Engine roar / acceleration sound (dynamically pitches with speed)
-#    - Crash / collision impact sound when hitting obstacles
-#    - Checkpoint arrival sound & success victory chime
-#    - Button click audio
-#    - Background music loop (lively arcade racing synth melody)
-# 5. รองรับปุ่ม WASD และ Arrow Keys ครบทั้งเดินหน้า ถอยหลัง เลี้ยวซ้ายขวา.
-# 6. เพิ่มอุปสรรคระหว่างขับ:
-#    - ก้อนหิน 3D (Rocks / Boulders)
-#    - กรวยจราจร 3D (Cones)
-#    - คราบน้ำมันลื่น (Oil Slicks)
-#    - ขับชนแล้วมีเสียงดังตึง! รถหมุนติ้ว สั่นหน้าจอ และเสียความเร็ว
+# Let's modify index.html according to user's requirements:
+# 1. "เวลาตอบผิดให้ขึ้นเป็นใบความรู้ให้หน่อย":
+#    - When answering incorrectly, do NOT just alert. Instead, show a clean, modern "Knowledge Card" (ใบความรู้ / Repair Knowledge Card) modal.
+#    - The Knowledge Card explains the correct concept clearly, with a clear icon (NO emojis), key shortcut/menu explanation, and a "ทำภารกิจแก้ตัว (Try Again)" button.
+# 2. "ไม่ต้องเพิ่มคะแนนให้หน่อยค่ะคะแนนจะได้ไม่เฟ้อ":
+#    - If answered incorrectly on the first try, flag this checkpoint as failed_attempt = true.
+#    - When re-attempting or passing after viewing the knowledge card, give 0 points (or score is NOT increased), so the score doesn't inflate! Only correct answers on the first attempt get points.
+# 3. "ไม่เอาอีโมจินะเอาไอคอน":
+#    - Remove ALL emoji icons (🏎️, 🚦, 🏆, 🛑, 🔧, 🎮, 🕹️, ⚠️, 💡, 📸, 🔄, 👤, 👑, ⭐, 🔰, etc.) across ALL screens, HUD, modals, knowledge cards, and finish screen.
+#    - Replace with clean, sharp SVG vector icons (Drive icon, Flag icon, Book/Lesson icon, Award trophy icon, Warning shield icon, Check icon, Refresh icon, etc.).
 
-html_code = """<!DOCTYPE html>
+updated_code = """<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
@@ -33,6 +26,8 @@ html_code = """<!DOCTYPE html>
       --yellow: #facc15;
       --green: #00b06f;
       --red: #ef4444;
+      --surface: #111827;
+      --border: rgba(255, 255, 255, 0.18);
     }
     * {
       box-sizing: border-box; margin: 0; padding: 0;
@@ -44,7 +39,7 @@ html_code = """<!DOCTYPE html>
       background: #7dd3fc; position: fixed; inset: 0;
     }
 
-    /* Three.js full-bleed Canvas */
+    /* Fullscreen WebGL Canvas */
     #three-container {
       position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: 1;
     }
@@ -55,13 +50,14 @@ html_code = """<!DOCTYPE html>
     /* Top Center HUD */
     #top-hud {
       position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
-      background: rgba(15, 23, 42, 0.82); backdrop-filter: blur(14px);
-      border: 2px solid rgba(255, 255, 255, 0.18);
+      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(14px);
+      border: 2px solid var(--border);
       border-radius: 20px; padding: 8px 22px;
-      display: flex; align-items: center; gap: 16px; color: #fff; z-index: 45;
+      display: flex; align-items: center; gap: 18px; color: #fff; z-index: 45;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }
-    .hud-chip { display: flex; align-items: center; gap: 6px; font-size: 0.95rem; font-weight: 700; }
+    .hud-chip { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 700; }
+    .hud-icon { width: 18px; height: 18px; fill: #38bdf8; display: inline-block; vertical-align: middle; }
     .hud-pill {
       background: linear-gradient(135deg, #f59e0b, #d97706);
       padding: 3px 12px; border-radius: 999px; font-weight: 800; font-family: 'Chakra Petch', sans-serif;
@@ -92,7 +88,7 @@ html_code = """<!DOCTYPE html>
     .star-badge {
       background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255,255,255,0.25);
       border-radius: 8px; padding: 3px 12px; font-size: 0.8rem; font-weight: 800;
-      color: #facc15; margin-bottom: 4px; display: flex; align-items: center; gap: 4px;
+      color: #facc15; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
     }
     .speed-dial {
       background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
@@ -106,7 +102,7 @@ html_code = """<!DOCTYPE html>
     .speed-unit { font-size: 0.9rem; font-weight: 800; color: #94a3b8; }
     .gear-mode { font-size: 0.85rem; color: #38bdf8; font-weight: 800; margin-left: 6px; }
 
-    /* Touch Controls */
+    /* Virtual Gamepad Buttons */
     #mobile-controls {
       position: fixed; bottom: 25px; left: 0; right: 0;
       display: flex; justify-content: space-between; padding: 0 35px;
@@ -143,7 +139,7 @@ html_code = """<!DOCTYPE html>
       z-index: 100;
     }
     .modal-card {
-      background: #111827; border: 3px solid #00a2ff; border-radius: 28px;
+      background: var(--surface); border: 3px solid #00a2ff; border-radius: 28px;
       padding: 32px 28px; max-width: 500px; width: 100%; text-align: center; color: #fff;
       box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px rgba(0, 162, 255, 0.3);
       animation: zoomIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -169,6 +165,7 @@ html_code = """<!DOCTYPE html>
       background: linear-gradient(180deg, #00b06f 0%, #008755 100%);
       color: #fff; font-size: 1.25rem; font-weight: 900; cursor: pointer;
       box-shadow: 0 6px 0 #00603d; transition: 0.1s;
+      display: flex; justify-content: center; align-items: center; gap: 8px;
     }
     .rbx-green-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #00603d; }
 
@@ -180,7 +177,7 @@ html_code = """<!DOCTYPE html>
       padding: 16px; z-index: 120;
     }
     .cp-box {
-      background: #111827; border: 3px solid #facc15;
+      background: var(--surface); border: 3px solid #facc15;
       border-radius: 26px; padding: 22px; max-width: 580px; width: 100%;
       color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
       max-height: 94vh; overflow-y: auto;
@@ -190,8 +187,9 @@ html_code = """<!DOCTYPE html>
     }
     .badge-cp {
       background: #facc15; color: #000; font-weight: 900; font-size: 0.85rem;
-      padding: 4px 12px; border-radius: 8px;
+      padding: 4px 12px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;
     }
+    .badge-cp svg { width: 16px; height: 16px; fill: #000; }
     .art-frame {
       width: 100%; height: 160px;
       background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
@@ -219,11 +217,44 @@ html_code = """<!DOCTYPE html>
       display: flex; justify-content: center; align-items: center;
       font-weight: 900; color: #facc15; border: 1px solid #475569;
     }
+
+    /* Knowledge Sheet Modal (ใบความรู้เมื่อตอบผิด) */
+    #knowledge-modal {
+      position: fixed; inset: 0;
+      background: rgba(10, 12, 16, 0.92); backdrop-filter: blur(14px);
+      display: none; justify-content: center; align-items: center;
+      padding: 18px; z-index: 130;
+    }
+    .knowledge-card {
+      background: #0f172a; border: 3px solid #ef4444; border-radius: 28px;
+      padding: 26px; max-width: 540px; width: 100%; color: #fff;
+      box-shadow: 0 20px 60px rgba(239, 68, 68, 0.3); text-align: left;
+      animation: zoomIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .kn-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+      color: #ef4444; font-size: 1.3rem; font-weight: 800;
+    }
+    .kn-header svg { width: 28px; height: 28px; fill: #ef4444; }
+    .kn-subtitle { font-size: 0.9rem; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5; }
+    .kn-box {
+      background: #1e293b; border-left: 4px solid #facc15;
+      padding: 14px 16px; border-radius: 10px; margin-bottom: 20px;
+    }
+    .kn-title { font-size: 1.05rem; font-weight: 800; color: #facc15; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+    .kn-title svg { width: 20px; height: 20px; fill: #facc15; }
+    .kn-desc { font-size: 0.95rem; color: #e2e8f0; line-height: 1.6; }
+    .kn-notice {
+      font-size: 0.85rem; color: #f87171; background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px;
+      padding: 8px 12px; margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+    }
+    .kn-notice svg { width: 18px; height: 18px; fill: #f87171; flex-shrink: 0; }
   </style>
 </head>
 <body>
 
-  <!-- Fullscreen WebGL Container -->
+  <!-- Fullscreen WebGL 3D Canvas Container -->
   <div id="three-container"></div>
 
   <!-- Audio Toggle (Top Left) -->
@@ -234,15 +265,15 @@ html_code = """<!DOCTYPE html>
   <!-- Top Center HUD -->
   <div id="top-hud">
     <div class="hud-chip">
-      <span style="color:#94a3b8;">นักขับ:</span>
+      <svg class="hud-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
       <span id="hud-name" style="font-weight:900; color:#38bdf8;">-</span>
     </div>
     <div class="hud-chip">
-      <span>ภารกิจ:</span>
+      <svg class="hud-icon" viewBox="0 0 24 24"><path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/></svg>
       <span class="hud-pill" id="hud-stage">ด่าน 1 / 12</span>
     </div>
     <div class="hud-chip">
-      <span>คะแนน:</span>
+      <svg class="hud-icon" style="fill:#10b981;" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l7.59-7.59L21 8l-9 9z"/></svg>
       <span class="hud-pill" style="background: linear-gradient(135deg, #10b981, #059669);" id="hud-score">0 / 20</span>
     </div>
   </div>
@@ -256,7 +287,7 @@ html_code = """<!DOCTYPE html>
   <!-- Speedometer (Bottom Center) -->
   <div id="speedometer-box">
     <div class="star-badge">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="#facc15"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="#facc15"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
       <span>TAXI PRO</span>
     </div>
     <div class="speed-dial">
@@ -289,21 +320,24 @@ html_code = """<!DOCTYPE html>
   <!-- Start Screen Modal -->
   <div id="start-screen" class="overlay-screen">
     <div class="modal-card">
-      <div class="game-h1">🏎️ WORD ROAD 3D</div>
+      <div class="game-h1">WORD ROAD 3D</div>
       <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
-        เกมขับรถเมืองเสมือนจริง 3 มิติ พร้อมระบบเสียงเต็มอารมณ์!<br>
+        เกมขับรถเมืองเสมือนจริง 3 มิติ พร้อมระบบเสียงเต็มรูปแบบ<br>
         ขับผ่านถนน 12 ด่านเพื่อปลดล็อกม่านเลเซอร์และสะสมคะแนน Microsoft Word
       </p>
       
       <div style="background: rgba(31, 41, 55, 0.8); border-radius: 14px; padding: 14px; font-size: 0.85rem; color: #38bdf8; margin: 18px 0; text-align: left; line-height: 1.6;">
-        🕹️ <b>การบังคับ (ทุกอุปกรณ์):</b><br>
-        • คอมฯ / Mac: ใช้ <b>ปุ่มลูกศร</b> หรือ <b>ปุ่ม W, A, S, D</b><br>
+        <b>การบังคับ (ทุกอุปกรณ์):</b><br>
+        • คอมพิวเตอร์: ใช้ <b>ปุ่มลูกศร</b> หรือ <b>ปุ่ม W, A, S, D</b><br>
         • มือถือ / iPad: สัมผัสปุ่มพวงมาลัยและคันเร่งด้านล่างจอ<br>
-        ⚠️ <i>ระวังก้อนหินและกรวยจราจรบนถนน หากชนรถจะหมุนและเสียหลัก!</i>
+        • หากตอบผิด ระบบจะแสดง <b>ใบความรู้</b> และเปิดโอกาสให้ทำภารกิจแก้ตัวโดยไม่เพิ่มคะแนนเพื่อรักษามาตรฐานคะแนน
       </div>
 
       <input type="text" id="player-input" class="input-box" placeholder="กรอกชื่อ-นามสกุล หรือเลขที่..." />
-      <button class="rbx-green-btn" onclick="startGame()">เข้าสู่เกม (START DRIVING) 🏁</button>
+      <button class="rbx-green-btn" onclick="startGame()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M8 5v14l11-7z"/></svg>
+        เข้าสู่เกม (START DRIVING)
+      </button>
     </div>
   </div>
 
@@ -311,7 +345,10 @@ html_code = """<!DOCTYPE html>
   <div id="checkpoint-modal">
     <div class="cp-box">
       <div class="cp-top">
-        <span class="badge-cp" id="cp-badge">🚦 CHECKPOINT 1</span>
+        <span class="badge-cp" id="cp-badge">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          CHECKPOINT 1
+        </span>
         <span style="font-weight:900; color:#facc15;" id="cp-pts">+1 คะแนน</span>
       </div>
       <div class="art-frame" id="cp-art"></div>
@@ -321,10 +358,41 @@ html_code = """<!DOCTYPE html>
     </div>
   </div>
 
+  <!-- Knowledge Sheet Modal (ใบความรู้เมื่อตอบผิด) -->
+  <div id="knowledge-modal">
+    <div class="knowledge-card">
+      <div class="kn-header">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <span>ยังไม่ถูกต้อง! ใบความรู้ประจำด่าน</span>
+      </div>
+      <div class="kn-subtitle">ศึกษาคำอธิบายและแนวคิดที่ถูกต้องด้านล่างนี้ เพื่อทำภารกิจแก้ตัวและปลดล็อกม่านเลเซอร์</div>
+
+      <div class="kn-box">
+        <div class="kn-title" id="kn-title">
+          <svg viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+          <span id="kn-subject">หัวข้อความรู้</span>
+        </div>
+        <div class="kn-desc" id="kn-text">
+          เนื้อหาความรู้สรุป...
+        </div>
+      </div>
+
+      <div class="kn-notice">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+        <span>รอบแก้ตัวนี้จะช่วยให้รถขับผ่านด่านได้ แต่จะไม่ได้รับคะแนนเพิ่มเพื่อรักษาความถูกต้องของคะแนน</span>
+      </div>
+
+      <button class="rbx-green-btn" onclick="retryMission()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        ทำภารกิจแก้ตัว (RETRY MISSION)
+      </button>
+    </div>
+  </div>
+
   <!-- Finish Screen -->
   <div id="finish-screen" class="overlay-screen" style="display:none;">
     <div class="modal-card">
-      <div class="game-h1" style="-webkit-text-fill-color: #4ade80;">🏆 VICTORY LAP!</div>
+      <div class="game-h1" style="-webkit-text-fill-color: #4ade80;">VICTORY LAP!</div>
       <p style="color: #cbd5e1; font-size: 0.95rem;">คุณพิชิตเส้นทาง Word Road ครบถ้วนทั้ง 12 สถานี</p>
 
       <div style="background: #030712; border: 2px dashed #facc15; border-radius: 18px; padding: 20px; margin: 18px 0;">
@@ -337,122 +405,137 @@ html_code = """<!DOCTYPE html>
         รหัสยืนยันผล: WR-CODE-READY
       </div>
 
-      <p style="font-size:0.85rem; color:#38bdf8; margin-bottom:15px;">📸 ถ่ายภาพหน้าจอนี้ส่งคุณครูเพื่อยืนยันคะแนน</p>
-      <button class="rbx-green-btn" onclick="location.reload()">เล่นอีกครั้ง 🔄</button>
+      <p style="font-size:0.85rem; color:#38bdf8; margin-bottom:15px;">ถ่ายภาพหน้าจอนี้ส่งคุณครูเพื่อยืนยันคะแนน</p>
+      <button class="rbx-green-btn" onclick="location.reload()">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="#fff"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+        เล่นอีกครั้ง
+      </button>
     </div>
   </div>
 
   <script>
     const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
 
-    // 12 Checkpoint Data & Story Artwork
+    // 12 Checkpoint Data, Story Artwork & Complete Knowledge Sheets
     const missions = [
       {
         id: 1, title: "ด่าน 1 Word City: จุดตรวจความพร้อม", pts: 1,
-        story: "🚨 ตำรวจจราจรสั่งหยุดรถ! ผู้หมวดกำลังเรียกตรวจความรู้เบื้องต้นก่อนอนุญาตให้เข้าสู่ตัวเมืองหลวง Word",
+        story: "ตำรวจจราจรสั่งหยุดรถ! ผู้หมวดกำลังเรียกตรวจความรู้เบื้องต้นก่อนอนุญาตให้เข้าสู่ตัวเมืองหลวง Word",
         q: "ตำรวจจราจรถามว่า: 'เครื่องมือใดใช้สำหรับทำให้ตัวหนังสือกลายเป็นตัวหนา (Bold)?'",
         opts: ["ไอคอนตัวอักษร I", "ไอคอนตัวอักษร B", "ไอคอนตัวอักษร U", "ไอคอนปากกาไฮไลต์"],
         ans: 1,
-        tip: "ไอคอน B ย่อมาจาก Bold ซึ่งแปลว่าตัวหนา",
+        knTitle: "การจัดรูปแบบตัวหนา (Bold)",
+        knText: "ในโปรแกรม Microsoft Word การทำตัวหนาใช้สัญลักษณ์ตัว <b>B</b> (มาจากคำว่า Bold) หรือกดคีย์ลัด <b>Ctrl + B</b> ส่วนตัว <i>I</i> ใช้ทำตัวเอียง (Italic) และ <u>U</u> ใช้ขีดเส้นใต้ (Underline)",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><rect y="110" width="300" height="40" fill="#334155"/><rect x="30" y="80" width="80" height="30" rx="8" fill="#ffffff"/><rect x="40" y="65" width="50" height="18" rx="6" fill="#38bdf8"/><rect x="30" y="90" width="80" height="10" fill="#1e40af"/><circle cx="48" cy="110" r="8" fill="#0f172a"/><circle cx="92" cy="110" r="8" fill="#0f172a"/><circle cx="65" cy="62" r="5" fill="#ef4444"/><circle cx="180" cy="60" r="14" fill="#fed7aa"/><path d="M165 60 Q180 46 195 60" fill="#1e3a8a"/><rect x="168" y="74" width="24" height="45" rx="6" fill="#1e3a8a"/><rect x="175" y="80" width="10" height="6" fill="#facc15"/><path d="M192 82 L215 72" stroke="#fed7aa" stroke-width="6" stroke-linecap="round"/><path d="M210 30 h70 a10 10 0 0 1 10 10 v25 a10 10 0 0 1 -10 10 h-40 l-10 12 l-2 -12 h-18 a10 10 0 0 1 -10 -10 v-25 a10 10 0 0 1 10 -10 z" fill="#ffffff"/><text x="245" y="55" fill="#0f172a" font-size="12" font-weight="bold" text-anchor="middle">จอดตรวจ!</text></svg>`
       },
       {
         id: 2, title: "ด่าน 2 Save Station: ทางข้ามรถไฟปิด", pts: 1,
-        story: "🚧 ไม้กั้นทางรถไฟลงมาปิดสนิท! นายสถานีแจ้งว่าต้องกดบันทึกเอกสารให้เรียบร้อยก่อนจึงจะเปิดไม้กั้นให้ผ่าน",
+        story: "ไม้กั้นทางรถไฟลงมาปิดสนิท! นายสถานีแจ้งว่าต้องกดบันทึกเอกสารให้เรียบร้อยก่อนจึงจะเปิดไม้กั้นให้ผ่าน",
         q: "นายสถานีถามว่า: 'แป้นพิมพ์ลัดคู่ใดใช้สำหรับบันทึกไฟล์ (Save) ทันที?'",
         opts: ["Ctrl + C", "Ctrl + V", "Ctrl + S", "Ctrl + P"],
         ans: 2,
-        tip: "ปุ่ม S ย่อมาจาก Save (บันทึก)",
-        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><line x1="0" y1="120" x2="300" y2="120" stroke="#64748b" stroke-width="8"/><rect x="70" y="50" width="16" height="70" fill="#475569"/><line x1="80" y1="80" x2="260" y2="80" stroke="#ef4444" stroke-width="12" stroke-linecap="round" stroke-dasharray="25, 20"/><circle cx="45" cy="75" r="12" fill="#fed7aa"/><rect x="36" y="87" width="18" height="35" rx="4" fill="#0284c7"/><rect x="36" y="70" width="18" height="6" fill="#dc2626"/><circle cx="78" cy="42" r="10" fill="#ef4444"/><text x="180" y="55" fill="#facc15" font-size="16" font-weight="bold">🛑 ทางข้ามปิดอยู่</text></svg>`
+        knTitle: "การบันทึกเอกสารด่วน (Save)",
+        knText: "การบันทึกเอกสารใช้คีย์ลัด <b>Ctrl + S</b> (Save) เพื่อป้องกันข้อมูลสูญหาย ส่วน <b>Ctrl + C</b> คือคัดลอก (Copy), <b>Ctrl + V</b> คือวาง (Paste), และ <b>Ctrl + P</b> คือสั่งพิมพ์ (Print)",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><line x1="0" y1="120" x2="300" y2="120" stroke="#64748b" stroke-width="8"/><rect x="70" y="50" width="16" height="70" fill="#475569"/><line x1="80" y1="80" x2="260" y2="80" stroke="#ef4444" stroke-width="12" stroke-linecap="round" stroke-dasharray="25, 20"/><circle cx="45" cy="75" r="12" fill="#fed7aa"/><rect x="36" y="87" width="18" height="35" rx="4" fill="#0284c7"/><rect x="36" y="70" width="18" height="6" fill="#dc2626"/><circle cx="78" cy="42" r="10" fill="#ef4444"/><text x="180" y="55" fill="#facc15" font-size="16" font-weight="bold">ทางข้ามปิดอยู่</text></svg>`
       },
       {
         id: 3, title: "ด่าน 3 Repair Station: รถเสียกะทันหัน", pts: 1,
-        story: "🛠️ เครื่องยนต์สะดุดเพราะเผลอลบข้อความสำคัญทิ้ง! ช่างเครื่องต้องการคำสั่งยกเลิกเพื่อกู้คืน",
+        story: "เครื่องยนต์สะดุดเพราะเผลอลบข้อความสำคัญทิ้ง! ช่างเครื่องต้องการคำสั่งยกเลิกเพื่อกู้คืน",
         q: "ช่างประจำอู่ถามว่า: 'หากต้องการยกเลิกคำสั่งที่ทำพลาด (Undo) ต้องกดปุ่มใด?'",
         opts: ["Ctrl + Z", "Ctrl + Y", "Ctrl + X", "Ctrl + A"],
         ans: 0,
-        tip: "Ctrl + Z ใช้กู้คืนหรือยกเลิกสิ่งที่ทำผิดพลาด (Undo)",
-        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><rect x="100" y="95" width="100" height="8" fill="#e2e8f0"/><rect x="145" y="103" width="12" height="30" fill="#64748b"/><circle cx="120" cy="70" r="12" fill="#94a3b8" opacity="0.6"/><circle cx="115" cy="55" r="16" fill="#94a3b8" opacity="0.4"/><circle cx="210" cy="75" r="12" fill="#fed7aa"/><rect x="202" y="87" width="16" height="36" fill="#ea580c"/><path d="M195 85 L180 75" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/><text x="150" y="38" fill="#38bdf8" font-size="16" font-weight="bold" text-anchor="middle">🔧 REPAIR SHOP (UNDO)</text></svg>`
+        knTitle: "การยกเลิกการกระทำ (Undo)",
+        knText: "คำสั่ง <b>Ctrl + Z</b> คือการกู้คืนหรือย้อนกลับการกระทำล่าสุด (Undo) เมื่อเผลอลบหรือพิมพ์ผิด ส่วน <b>Ctrl + Y</b> คือการทำซ้ำ (Redo), <b>Ctrl + X</b> คือตัด (Cut), และ <b>Ctrl + A</b> คือเลือกข้อความทั้งหมด",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><rect x="100" y="95" width="100" height="8" fill="#e2e8f0"/><rect x="145" y="103" width="12" height="30" fill="#64748b"/><circle cx="120" cy="70" r="12" fill="#94a3b8" opacity="0.6"/><circle cx="115" cy="55" r="16" fill="#94a3b8" opacity="0.4"/><circle cx="210" cy="75" r="12" fill="#fed7aa"/><rect x="202" y="87" width="16" height="36" fill="#ea580c"/><path d="M195 85 L180 75" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/><text x="150" y="38" fill="#38bdf8" font-size="16" font-weight="bold" text-anchor="middle">REPAIR SHOP (UNDO)</text></svg>`
       },
       {
         id: 4, title: "ด่าน 4 Design Studio: ตกแต่งป้ายชื่อ", pts: 1,
-        story: "🎨 ดีไซเนอร์ประจำเมืองต้องการให้คุณปรับขนาดแบบอักษรป้ายทะเบียนให้ใหญ่และชัดเจน",
+        story: "ดีไซเนอร์ประจำเมืองต้องการให้คุณปรับขนาดแบบอักษรป้ายทะเบียนให้ใหญ่และชัดเจน",
         q: "ต้องการเปลี่ยน 'ขนาดของตัวอักษร' ให้ใหญ่ขึ้น ต้องเลือกเครื่องมือใดในแถบ Home?",
         opts: ["Font Size (ขนาดแบบอักษร)", "Font Color (สีฟอนต์)", "Strikethrough", "Text Highlight"],
         ans: 0,
-        tip: "Font Size คือกล่องตัวเลขกำหนดขนาดตัวอักษร",
+        knTitle: "การกำหนดขนาดตัวอักษร (Font Size)",
+        knText: "ในแถบหน้าแรก (Home) กลุ่มคำสั่ง Font จะมีช่องตัวเลข <b>Font Size</b> (เช่น 16, 18, 24 pt) สำหรับปรับขนาดความใหญ่ของตัวอักษร และมีปุ่มเพิ่ม/ลดขนาดอักษรด่วน (Increase/Decrease Font Size) อยู่ติดกัน",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><rect x="40" y="35" width="220" height="80" rx="14" fill="#0f172a" stroke="#a855f7" stroke-width="3"/><text x="70" y="85" fill="#f8fafc" font-size="34" font-weight="900">A</text><text x="110" y="85" fill="#a855f7" font-size="46" font-weight="900">A</text><text x="160" y="85" fill="#38bdf8" font-size="22" font-weight="bold">[ 24 pt ]</text><circle cx="225" cy="75" r="15" fill="#ec4899"/></svg>`
       },
       {
         id: 5, title: "ด่าน 5 Alignment Bridge: สะพานขาดกึ่งกลาง", pts: 2,
-        story: "📐 สะพานข้ามแม่น้ำถูกตัดขาด! สะพานจะเลื่อนประกบกันเมื่อจัดวางแนวข้อความกึ่งกลางถูกต้อง",
+        story: "สะพานข้ามแม่น้ำถูกตัดขาด! สะพานจะเลื่อนประกบกันเมื่อจัดวางแนวข้อความกึ่งกลางถูกต้อง",
         q: "ต้องการจัดหัวข้อรายงานให้อยู่ 'กึ่งกลางหน้ากระดาษพอดี' ต้องเลือกคำสั่งใด?",
         opts: ["Align Left (ชิดซ้าย)", "Center (กึ่งกลาง - Ctrl+E)", "Align Right (ชิดขวา)", "Justify (ชิดขอบ)"],
         ans: 1,
-        tip: "Center มีคีย์ลัดคือ Ctrl + E เพื่อจัดกึ่งกลาง",
+        knTitle: "การจัดแนวย่อหน้า (Paragraph Alignment)",
+        knText: "การจัดข้อความให้อยู่กึ่งกลางหน้ากระดาษใช้คำสั่ง <b>Center</b> หรือกดคีย์ลัด <b>Ctrl + E</b> นิยมใช้กับหัวข้อรายงาน ส่วน <b>Ctrl + L</b> คือชิดซ้าย, <b>Ctrl + R</b> คือชิดขวา และ <b>Ctrl + J</b> คือกระจายเต็มขอบ (Justify)",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#0284c7"/><path d="M0 130 Q75 120 150 130 T300 130" stroke="#38bdf8" stroke-width="4" fill="none"/><rect x="0" y="70" width="100" height="24" fill="#475569"/><rect x="200" y="70" width="100" height="24" fill="#475569"/><circle cx="150" cy="65" r="22" fill="#facc15"/><rect x="138" y="55" width="24" height="4" rx="2" fill="#0f172a"/><rect x="142" y="63" width="16" height="4" rx="2" fill="#0f172a"/><rect x="136" y="71" width="28" height="4" rx="2" fill="#0f172a"/></svg>`
       },
       {
         id: 6, title: "ด่าน 6 List Roundabout: วงเวียนเขาวงกต", pts: 1,
-        story: "🔄 รถมาถึงวงเวียนใหญ่ที่มีป้ายบอกทางแยกเป็นหัวข้อย่อยแบบสัญลักษณ์จุดกลม",
+        story: "รถมาถึงวงเวียนใหญ่ที่มีป้ายบอกทางแยกเป็นหัวข้อย่อยแบบสัญลักษณ์จุดกลม",
         q: "หากต้องการทำรายการสรุปหัวข้อย่อยแบบจุดกลม โดยไม่มีเลข 1 2 3 ต้องใช้เครื่องมือใด?",
         opts: ["Numbering", "Bullets (สัญลักษณ์แสดงหัวข้อย่อย)", "Multilevel List", "Indent"],
         ans: 1,
-        tip: "Bullets คือเครื่องหมายจุด วงกลม หรือสี่เหลี่ยมหน้าบรรทัด",
+        knTitle: "สัญลักษณ์หัวข้อย่อย (Bullets)",
+        knText: "เมื่อต้องการสร้างรายการที่ไม่มีลำดับก่อนหลัง ให้ใช้ <b>Bullets</b> (สัญลักษณ์จุดหรือเครื่องหมายต่างๆ) แต่ถ้าเป็นขั้นตอนหรือรายการที่ต้องมีลำดับ 1, 2, 3 ให้ใช้คำสั่ง <b>Numbering</b>",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><circle cx="150" cy="75" r="50" fill="#334155" stroke="#facc15" stroke-width="4"/><circle cx="130" cy="60" r="4" fill="#38bdf8"/><line x1="142" y1="60" x2="175" y2="60" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/><circle cx="130" cy="75" r="4" fill="#38bdf8"/><line x1="142" y1="75" x2="175" y2="75" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/><circle cx="130" cy="90" r="4" fill="#38bdf8"/><line x1="142" y1="90" x2="175" y2="90" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/></svg>`
       },
       {
         id: 7, title: "ด่าน 7 Image Park: ซุ้มประตูสวนภาพ", pts: 2,
-        story: "🖼️ ซุ้มประตูสวนสาธารณะมีกรอบรูปภาพขนาดใหญ่ ต้องเลือกแท็บที่ถูกต้องเพื่อแทรกภาพ",
+        story: "ซุ้มประตูสวนสาธารณะมีกรอบรูปภาพขนาดใหญ่ ต้องเลือกแท็บที่ถูกต้องเพื่อแทรกภาพ",
         q: "เมนูหลักแท็บใดบน Ribbon ใช้สำหรับการนำเข้าไฟล์รูปภาพมาวางในเอกสาร?",
         opts: ["Home (หน้าแรก)", "Insert (แทรก)", "Layout (เค้าโครง)", "View (มุมมอง)"],
         ans: 1,
-        tip: "การนำสิ่งใหม่เข้ามา เช่น รูป ตาราง รูปทรง อยู่ในแท็บ Insert",
+        knTitle: "การแทรกรูปภาพ (Insert Pictures)",
+        knText: "การนำสิ่งใหม่เข้ามาใส่ในหน้าเอกสาร เช่น รูปภาพ, ตาราง, รูปร่าง (Shapes) หรือ SmartArt จะต้องไปที่แท็บ <b>Insert (แทรก)</b> แล้วเลือกหัวข้อ <b>Pictures</b> เสมอ",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#15803d"/><rect x="80" y="30" width="140" height="90" rx="8" fill="#f8fafc" stroke="#facc15" stroke-width="6"/><rect x="90" y="40" width="120" height="70" fill="#38bdf8"/><polygon points="90,110 130,70 160,95 210,55 210,110" fill="#16a34a"/><circle cx="120" cy="60" r="10" fill="#facc15"/></svg>`
       },
       {
         id: 8, title: "ด่าน 8 Table Town: ตารางหมากรุกขวางถนน", pts: 2,
-        story: "📊 ถนนในเมืองแบ่งเป็นตาราง ต้องการยุบรวมสองช่องให้เป็นทางเลนกว้างเพื่อขับผ่าน",
+        story: "ถนนในเมืองแบ่งเป็นตาราง ต้องการยุบรวมสองช่องให้เป็นทางเลนกว้างเพื่อขับผ่าน",
         q: "คำสั่งใดใช้สำหรับรวมเซลล์ในตาราง 2 ช่องเข้าด้วยกันให้เป็นช่องเดียว?",
         opts: ["Split Cells", "Merge Cells", "Delete Row", "Distribute Columns"],
         ans: 1,
-        tip: "Merge แปลว่า ผสาน หรือ รวมเซลล์เข้าด้วยกัน",
-        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><rect x="60" y="30" width="180" height="90" fill="#0f172a" stroke="#38bdf8" stroke-width="4"/><line x1="60" y1="75" x2="240" y2="75" stroke="#38bdf8" stroke-width="3"/><line x1="150" y1="30" x2="150" y2="75" stroke="#38bdf8" stroke-width="3"/><text x="150" y="105" fill="#10b981" font-size="18" font-weight="900" text-anchor="middle">MERGE CELLS ⚡</text></svg>`
+        knTitle: "การผสานเซลล์ในตาราง (Merge Cells)",
+        knText: "เมื่อต้องการรวมช่องตารางตั้งแต่ 2 ช่องขึ้นไปให้กลายเป็นช่องเดียวกัน ให้คลุมดำเซลล์ที่ต้องการแล้วคลิกคำสั่ง <b>Merge Cells</b> ในแท็บ Table Layout ส่วน <b>Split Cells</b> ใช้สำหรับแบ่งเซลล์ย่อยออกเป็นหลายช่อง",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e293b"/><rect x="60" y="30" width="180" height="90" fill="#0f172a" stroke="#38bdf8" stroke-width="4"/><line x1="60" y1="75" x2="240" y2="75" stroke="#38bdf8" stroke-width="3"/><line x1="150" y1="30" x2="150" y2="75" stroke="#38bdf8" stroke-width="3"/><text x="150" y="105" fill="#10b981" font-size="18" font-weight="900" text-anchor="middle">MERGE CELLS</text></svg>`
       },
       {
         id: 9, title: "ด่าน 9 Orientation Valley: ช่องแคบหุบเขา", pts: 2,
-        story: "🏞️ หุบเขามีหน้าผาขนาบข้าง ต้องเปลี่ยนกระดาษจากแนวตั้งเป็นแนวนอนเพื่อให้ผ่านได้!",
+        story: "หุบเขามีหน้าผาขนาบข้าง ต้องเปลี่ยนกระดาษจากแนวตั้งเป็นแนวนอนเพื่อให้ผ่านได้!",
         q: "การหมุนกระดาษจาก 'แนวตั้ง' ให้กลายเป็น 'แนวนอน' ต้องเข้าไปปรับที่เมนูใด?",
         opts: ["Orientation ในแถบ Layout", "Margins", "Paper Size", "Text Wrapping"],
         ans: 0,
-        tip: "Orientation (การวางแนว) ให้เลือก Landscape เพื่อเป็นแนวนอน",
+        knTitle: "การวางแนวกระดาษ (Page Orientation)",
+        knText: "การปรับทิศทางของกระดาษให้ไปที่แท็บ <b>Layout</b> แล้วเลือก <b>Orientation (การวางแนว)</b> โดยมีให้เลือก 2 รูปแบบ คือ <b>Portrait (แนวตั้ง)</b> และ <b>Landscape (แนวนอน)</b>",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#0f172a"/><polygon points="0,150 60,40 130,150" fill="#334155"/><polygon points="170,150 240,30 300,150" fill="#334155"/><rect x="120" y="60" width="60" height="40" rx="4" fill="#f8fafc" stroke="#facc15" stroke-width="3"/></svg>`
       },
       {
         id: 10, title: "ด่าน 10 Find Tunnel: อุโมงค์มืดทึบ", pts: 2,
-        story: "🔦 ภายในอุโมงค์มืดมิด มีคำผิดซ่อนอยู่ ต้องใช้ไฟฉายส่องค้นหาและแทนที่คำใหม่ทันที!",
+        story: "ภายในอุโมงค์มืดมิด มีคำผิดซ่อนอยู่ ต้องใช้ไฟฉายส่องค้นหาและแทนที่คำใหม่ทันที!",
         q: "ปุ่มลัดสำหรับเรียกหน้าต่าง 'ค้นหาและแทนที่ข้อความ' (Find and Replace) คือปุ่มใด?",
         opts: ["Ctrl + F", "Ctrl + H", "Ctrl + G", "Ctrl + K"],
         ans: 1,
-        tip: "Ctrl + F คือค้นหาอย่างเดียว แต่ Ctrl + H คือค้นหาแล้วแทนที่คำใหม่ทันที",
+        knTitle: "การค้นหาและแทนที่คำ (Find and Replace)",
+        knText: "หากต้องการค้นหาคำพร้อมแทนที่ด้วยคำใหม่อัตโนมัติทั้งเอกสาร ให้ใช้คีย์ลัด <b>Ctrl + H</b> (Find and Replace) ส่วน <b>Ctrl + F</b> คือการค้นหา (Find) ตำแหน่งของคำเพียงอย่างเดียว",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#050811"/><path d="M50 150 Q150 10 250 150" fill="#1e293b" stroke="#facc15" stroke-width="6"/><polygon points="150,75 80,145 220,145" fill="rgba(250, 204, 21, 0.25)"/><circle cx="150" cy="75" r="18" fill="none" stroke="#38bdf8" stroke-width="4"/><text x="150" y="80" fill="#ffffff" font-size="14" font-weight="bold" text-anchor="middle">H</text></svg>`
       },
       {
         id: 11, title: "ด่าน 11 Portal Gateway: ประตูมิติขึ้นหน้าใหม่", pts: 2,
-        story: "🌌 รถมาถึงจุดวาร์ปมิติ สำหรับตัดขึ้นหน้าใหม่ทันทีโดยไม่ต้องเคาะปุ่ม Enter หลายๆ ครั้ง",
+        story: "รถมาถึงจุดวาร์ปมิติ สำหรับตัดขึ้นหน้าใหม่ทันทีโดยไม่ต้องเคาะปุ่ม Enter หลายๆ ครั้ง",
         q: "คำสั่งใดที่นักพิมพ์เอกสารมืออาชีพใช้สำหรับ 'ขึ้นหน้ากระดาษแผ่นใหม่ทันที'?",
         opts: ["Line Break", "Page Break (ตัวแบ่งหน้า)", "Column Break", "Section Break"],
         ans: 1,
-        tip: "Page Break หรือกด Ctrl + Enter เพื่อตัดขึ้นหน้าใหม่อย่างสวยงาม",
-        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e1b4b"/><ellipse cx="150" cy="75" rx="70" ry="55" fill="none" stroke="#a855f7" stroke-width="8"/><ellipse cx="150" cy="75" rx="55" ry="40" fill="none" stroke="#38bdf8" stroke-width="5"/><circle cx="150" cy="75" r="25" fill="#4f46e5"/><text x="150" y="82" fill="#ffffff" font-size="16" font-weight="900" text-anchor="middle">PAGE 2 ➔</text></svg>`
+        knTitle: "ตัวแบ่งหน้ากระดาษ (Page Break)",
+        knText: "การขึ้นหน้ากระดาษแผ่นใหม่อย่างเป็นระเบียบโดยไม่เคาะ Enter ซ้ำๆ ให้ใช้คำสั่ง <b>Page Break</b> (ตัวแบ่งหน้า) หรือกดคีย์ลัด <b>Ctrl + Enter</b> ทำให้เนื้อหาไม่เลื่อนผิดตำแหน่งเมื่อมีการแก้ไขข้อความข้างบน",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#1e1b4b"/><ellipse cx="150" cy="75" rx="70" ry="55" fill="none" stroke="#a855f7" stroke-width="8"/><ellipse cx="150" cy="75" rx="55" ry="40" fill="none" stroke="#38bdf8" stroke-width="5"/><circle cx="150" cy="75" r="25" fill="#4f46e5"/><text x="150" y="82" fill="#ffffff" font-size="16" font-weight="900" text-anchor="middle">PAGE 2</text></svg>`
       },
       {
         id: 12, title: "ด่าน 12 Grand Finale: ลานเกียรติยศเส้นชัย", pts: 3,
-        story: "🏆 ถึงเส้นชัยลานพิธีการใหญ่! กำลังพิมพ์ใบประกาศนียบัตรมอบให้ผู้ขับขี่ทุกคนด้วย Mail Merge",
+        story: "ถึงเส้นชัยลานพิธีการใหญ่! กำลังพิมพ์ใบประกาศนียบัตรมอบให้ผู้ขับขี่ทุกคนด้วย Mail Merge",
         q: "การดึงรายชื่อมาพิมพ์เกียรติบัตรหรือทำจดหมายเวียนส่งคนจำนวนมาก ต้องใช้แท็บคำสั่งใด?",
         opts: ["References (การอ้างอิง)", "Review (ตรวจทาน)", "Mailings (การส่งจดหมาย)", "View (มุมมอง)"],
         ans: 2,
-        tip: "Mailings คือคำสั่งสำหรับการทำ Mail Merge (จดหมายเวียน)",
+        knTitle: "การทำจดหมายเวียน (Mail Merge)",
+        knText: "แท็บ <b>Mailings (การส่งจดหมาย)</b> มีเครื่องมือเด่นคือ <b>Mail Merge (จดหมายเวียน)</b> ซึ่งใช้สร้างเอกสารรูปแบบเดียวกัน เช่น ใบประกาศนียบัตร ซองจดหมาย หรือใบเสร็จ โดยดึงรายชื่อจากตารางข้อมูลมาใส่โดยอัตโนมัติ",
         art: `<svg viewBox="0 0 300 150" width="100%" height="100%"><rect width="300" height="150" fill="#0f172a"/><circle cx="40" cy="30" r="10" fill="#ef4444"/><circle cx="260" cy="40" r="12" fill="#38bdf8"/><rect x="50" y="20" width="200" height="24" fill="#ffffff"/><path d="M135 65 h30 v25 a15 15 0 0 1 -30 0 z" fill="#facc15"/><rect x="145" y="90" width="10" height="15" fill="#facc15"/><rect x="130" y="105" width="40" height="10" rx="3" fill="#ca8a04"/></svg>`
       }
     ];
@@ -467,7 +550,6 @@ html_code = """<!DOCTYPE html>
     function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        // Start continuous engine hum
         engineOsc = audioCtx.createOscillator();
         engineGain = audioCtx.createGain();
         engineOsc.type = "sawtooth";
@@ -503,9 +585,24 @@ html_code = """<!DOCTYPE html>
       osc.stop(audioCtx.currentTime + 0.35);
     }
 
+    function playWrongSound() {
+      if (!audioCtx || isMuted) return;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(110, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    }
+
     function playSuccessSound() {
       if (!audioCtx || isMuted) return;
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      const notes = [523.25, 659.25, 783.99, 1046.50];
       notes.forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -557,7 +654,9 @@ html_code = """<!DOCTYPE html>
     let isModalOpen = false;
     let isGameOver = false;
 
-    // Keys state (Arrow Keys + WASD)
+    // Track whether player made a mistake on current checkpoint to prevent score inflation
+    let checkpointFailedAttempts = {};
+
     let keys = { up: false, down: false, left: false, right: false };
 
     let carPhysics = {
@@ -601,7 +700,7 @@ html_code = """<!DOCTYPE html>
 
     function init3DWorld() {
       scene = new THREE.Scene();
-      scene.background = new THREE.Color(0x7dd3fc); // Bright Cartoon Sky
+      scene.background = new THREE.Color(0x7dd3fc);
       scene.fog = new THREE.Fog(0x7dd3fc, 80, 500);
 
       camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -614,7 +713,6 @@ html_code = """<!DOCTYPE html>
 
       window.addEventListener("resize", onWindowResize);
 
-      // Lighting
       const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.85);
       scene.add(hemiLight);
 
@@ -636,7 +734,6 @@ html_code = """<!DOCTYPE html>
     }
 
     function buildWorldEnvironment() {
-      // Grass Plain
       const groundGeo = new THREE.PlaneGeometry(800, 3200);
       const groundMat = new THREE.MeshLambertMaterial({ color: 0x4ade80 });
       const ground = new THREE.Mesh(groundGeo, groundMat);
@@ -644,7 +741,6 @@ html_code = """<!DOCTYPE html>
       ground.position.z = -1200;
       scene.add(ground);
 
-      // Main Road (Width 32)
       const roadGeo = new THREE.PlaneGeometry(32, 3000);
       const roadMat = new THREE.MeshLambertMaterial({ color: 0x1e293b });
       const road = new THREE.Mesh(roadGeo, roadMat);
@@ -667,7 +763,7 @@ html_code = """<!DOCTYPE html>
         scene.add(rightYellow);
       }
 
-      // White Dashed Lane Lines
+      // White Dashed Lines
       for (let z = 50; z > -2600; z -= 16) {
         const dashGeo = new THREE.PlaneGeometry(0.4, 6);
         const dashMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
@@ -681,7 +777,7 @@ html_code = """<!DOCTYPE html>
         scene.add(rightDash);
       }
 
-      // Concrete Sidewalks with 3D Curb
+      // Concrete Sidewalks
       const curbGeo = new THREE.BoxGeometry(4, 0.5, 3000);
       const curbMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0 });
       const leftCurb = new THREE.Mesh(curbGeo, curbMat);
@@ -692,10 +788,9 @@ html_code = """<!DOCTYPE html>
       rightCurb.position.set(18, 0.25, -1200);
       scene.add(rightCurb);
 
-      // Buildings & Trees with Windows (High Detail Blocky Style)
+      // Buildings & Trees
       const colors = [0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981, 0x8b5cf6, 0xec4899, 0x06b6d4, 0xf97316];
       for (let z = 20; z > -2500; z -= 38) {
-        // Left Building
         const bH1 = 28 + Math.random() * 40;
         const bW1 = 20 + Math.random() * 8;
         const bGeo1 = new THREE.BoxGeometry(bW1, bH1, 28);
@@ -704,7 +799,6 @@ html_code = """<!DOCTYPE html>
         b1.position.set(-32 - bW1 / 2, bH1 / 2, z);
         scene.add(b1);
 
-        // Windows for Left Building
         for (let wy = 8; wy < bH1 - 6; wy += 8) {
           const winGeo = new THREE.PlaneGeometry(bW1 - 6, 3);
           const winMat = new THREE.MeshBasicMaterial({ color: 0xffedd5 });
@@ -713,7 +807,6 @@ html_code = """<!DOCTYPE html>
           scene.add(win);
         }
 
-        // Right Building
         const bH2 = 28 + Math.random() * 40;
         const bW2 = 20 + Math.random() * 8;
         const bGeo2 = new THREE.BoxGeometry(bW2, bH2, 28);
@@ -722,7 +815,6 @@ html_code = """<!DOCTYPE html>
         b2.position.set(32 + bW2 / 2, bH2 / 2, z);
         scene.add(b2);
 
-        // Trees along sidewalk
         if (z % 76 === 0) {
           createTree(-21, z);
           createTree(21, z);
@@ -747,35 +839,30 @@ html_code = """<!DOCTYPE html>
     function buildSportsCar() {
       carGroup = new THREE.Group();
 
-      // Main Body
       const bodyGeo = new THREE.BoxGeometry(3.8, 1.35, 7.2);
-      const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a }); // Navy Blue Taxi
+      const bodyMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
       const carBody = new THREE.Mesh(bodyGeo, bodyMat);
       carBody.position.y = 1.0;
       carGroup.add(carBody);
 
-      // Cockpit / Cabin Roof
       const cabinGeo = new THREE.BoxGeometry(3.2, 1.2, 3.8);
       const cabinMat = new THREE.MeshLambertMaterial({ color: 0x0f172a });
       const cabin = new THREE.Mesh(cabinGeo, cabinMat);
       cabin.position.set(0, 2.0, -0.4);
       carGroup.add(cabin);
 
-      // Glass Windows
       const glassGeo = new THREE.BoxGeometry(3.1, 1.0, 3.6);
       const glassMat = new THREE.MeshLambertMaterial({ color: 0x38bdf8 });
       const glass = new THREE.Mesh(glassGeo, glassMat);
       glass.position.set(0, 2.05, -0.4);
       carGroup.add(glass);
 
-      // Yellow Taxi Roof Sign
       const taxiGeo = new THREE.BoxGeometry(1.4, 0.4, 0.65);
       const taxiMat = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
       const taxi = new THREE.Mesh(taxiGeo, taxiMat);
       taxi.position.set(0, 2.8, -0.3);
       carGroup.add(taxi);
 
-      // Taillights
       const tlGeo = new THREE.BoxGeometry(0.8, 0.3, 0.2);
       const tlMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
       const tlLeft = new THREE.Mesh(tlGeo, tlMat);
@@ -786,7 +873,6 @@ html_code = """<!DOCTYPE html>
       tlRight.position.x = 1.4;
       carGroup.add(tlRight);
 
-      // Headlights
       const hlGeo = new THREE.BoxGeometry(0.8, 0.3, 0.2);
       const hlMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
       const hlLeft = new THREE.Mesh(hlGeo, hlMat);
@@ -797,7 +883,6 @@ html_code = """<!DOCTYPE html>
       hlRight.position.x = 1.4;
       carGroup.add(hlRight);
 
-      // 4 Wheels
       const wheelGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.6, 16);
       const wheelMat = new THREE.MeshLambertMaterial({ color: 0x111827 });
       const wheelPositions = [
@@ -822,7 +907,6 @@ html_code = """<!DOCTYPE html>
         const gate = new THREE.Group();
         gate.position.set(wp.x, 0, wp.z);
 
-        // Pillars
         const pGeo = new THREE.BoxGeometry(2, 16, 2);
         const pMat = new THREE.MeshLambertMaterial({ color: 0x334155 });
         const pL = new THREE.Mesh(pGeo, pMat);
@@ -833,14 +917,12 @@ html_code = """<!DOCTYPE html>
         pR.position.x = 17;
         gate.add(pR);
 
-        // Crossbar
         const barGeo = new THREE.BoxGeometry(36, 2.2, 2.2);
         const barMat = new THREE.MeshLambertMaterial({ color: 0xfacc15 });
         const bar = new THREE.Mesh(barGeo, barMat);
         bar.position.set(0, 15, 0);
         gate.add(bar);
 
-        // Holographic Red Laser Barrier
         const laserGeo = new THREE.PlaneGeometry(32, 14);
         const laserMat = new THREE.MeshBasicMaterial({
           color: 0xef4444,
@@ -852,7 +934,6 @@ html_code = """<!DOCTYPE html>
         laser.position.set(0, 7, 0);
         gate.add(laser);
 
-        // Checkpoint Sign Banner
         const signGeo = new THREE.BoxGeometry(9, 3.2, 0.6);
         const signMat = new THREE.MeshLambertMaterial({ color: 0x1e3a8a });
         const sign = new THREE.Mesh(signGeo, signMat);
@@ -866,17 +947,14 @@ html_code = """<!DOCTYPE html>
 
     function buildObstacles() {
       obstacles = [];
-      // Spawn 3D Boulders (Rocks), Traffic Cones & Oil Slicks between checkpoints
       for (let z = -50; z > -2400; z -= 32) {
-        // Skip area very close to gates
         const nearGate = waypoints.some(wp => Math.abs(wp.z - z) < 16);
         if (nearGate) continue;
 
         const typeRand = Math.random();
-        const laneX = (Math.random() - 0.5) * 22; // Random lane
+        const laneX = (Math.random() - 0.5) * 22;
 
         if (typeRand < 0.4) {
-          // 3D Rock / Boulder
           const rockGeo = new THREE.DodecahedronGeometry(1.6 + Math.random() * 0.8, 1);
           const rockMat = new THREE.MeshLambertMaterial({ color: 0x64748b, flatShading: true });
           const rock = new THREE.Mesh(rockGeo, rockMat);
@@ -885,7 +963,6 @@ html_code = """<!DOCTYPE html>
           scene.add(rock);
           obstacles.push({ mesh: rock, x: laneX, z: z, radius: 2.2, type: 'rock', hit: false });
         } else if (typeRand < 0.75) {
-          // 3D Traffic Cone
           const coneGeo = new THREE.ConeGeometry(0.9, 2.4, 8);
           const coneMat = new THREE.MeshLambertMaterial({ color: 0xea580c });
           const cone = new THREE.Mesh(coneGeo, coneMat);
@@ -897,7 +974,6 @@ html_code = """<!DOCTYPE html>
     }
 
     function setupInputListeners() {
-      // Keyboard Controls (WASD + Arrow Keys)
       window.addEventListener("keydown", e => {
         const k = e.key.toLowerCase();
         if (k === "arrowup" || k === "w") keys.up = true;
@@ -913,7 +989,6 @@ html_code = """<!DOCTYPE html>
         if (k === "arrowright" || k === "d") keys.right = false;
       });
 
-      // Mobile Touch Gamepad
       const bindTouch = (id, action) => {
         const el = document.getElementById(id);
         el.addEventListener("touchstart", (e) => { e.preventDefault(); keys[action] = true; });
@@ -928,13 +1003,11 @@ html_code = """<!DOCTYPE html>
     function updateGamePhysics() {
       if (isModalOpen) return;
 
-      // Handle Obstacle Spin Effect
       if (carPhysics.spinTimer > 0) {
         carPhysics.spinTimer--;
         carPhysics.angle += 0.28;
         carPhysics.speed *= 0.94;
       } else {
-        // Acceleration & Braking
         if (keys.up) {
           carPhysics.speed += carPhysics.accel;
         } else if (keys.down) {
@@ -945,7 +1018,6 @@ html_code = """<!DOCTYPE html>
         }
         carPhysics.speed = Math.max(-0.5, Math.min(carPhysics.speed, carPhysics.maxSpeed));
 
-        // Steering
         if (carPhysics.speed !== 0) {
           const dir = carPhysics.speed > 0 ? 1 : -1;
           if (keys.left) carPhysics.angle += carPhysics.turnSpeed * dir;
@@ -953,34 +1025,30 @@ html_code = """<!DOCTYPE html>
         }
       }
 
-      // Update engine audio pitch with speed
       updateEngineSound(carPhysics.speed / carPhysics.maxSpeed);
 
-      // Compute Next Position
       const nextX = carPhysics.x - Math.sin(carPhysics.angle) * carPhysics.speed;
       const nextZ = carPhysics.z - Math.cos(carPhysics.angle) * carPhysics.speed;
 
-      // Road boundaries (-13 to +13)
       carPhysics.x = Math.max(-13, Math.min(13, nextX));
 
-      // Obstacle Collision Check (Rocks & Cones)
+      // Obstacle Collision
       obstacles.forEach(ob => {
         if (!ob.hit) {
           const dist = Math.hypot(carPhysics.x - ob.x, carPhysics.z - ob.z);
           if (dist < ob.radius + 1.8) {
             ob.hit = true;
-            carPhysics.spinTimer = 30; // Spin car
+            carPhysics.spinTimer = 30;
             carPhysics.speed *= 0.3;
             playCrashSound();
 
-            // Flash screen red effect
             renderer.domElement.style.filter = "brightness(1.5) contrast(1.2)";
             setTimeout(() => renderer.domElement.style.filter = "none", 120);
           }
         }
       });
 
-      // Laser Barrier Collision (MUST ANSWER TO PASS)
+      // Checkpoint Barrier Check
       let laserBlocked = false;
       checkpoints.forEach((cp, idx) => {
         if (!cp.passed) {
@@ -996,11 +1064,10 @@ html_code = """<!DOCTYPE html>
         carPhysics.z = nextZ;
       }
 
-      // Sync 3D Car Model Position & Orientation
       carGroup.position.set(carPhysics.x, 0, carPhysics.z);
       carGroup.rotation.y = carPhysics.angle;
 
-      // Chase Camera (Positioned Behind Car like Roblox Driving)
+      // Chase Camera Follow
       const cameraOffset = new THREE.Vector3(0, 5.2, 12.5);
       cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), carPhysics.angle);
       camera.position.x = carPhysics.x + cameraOffset.x;
@@ -1014,19 +1081,23 @@ html_code = """<!DOCTYPE html>
       );
       camera.lookAt(lookAhead);
 
-      // Speedometer & Gear Display
       const mph = Math.round(Math.abs(carPhysics.speed) * 52);
       document.getElementById("speed-val").innerText = mph;
       document.getElementById("gear-val").innerText = carPhysics.speed > 0.05 ? 'D' : (carPhysics.speed < -0.05 ? 'R' : 'N');
 
-      // GPS Minimap Render
       renderMinimap();
     }
 
+    let activeStageIdx = 0;
+
     function openCheckpointModal(idx) {
       isModalOpen = true;
+      activeStageIdx = idx;
       const m = missions[idx];
-      document.getElementById("cp-badge").innerText = `🚦 CHECKPOINT ${idx + 1}`;
+      document.getElementById("cp-badge").innerHTML = `
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="#000"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        CHECKPOINT ${idx + 1}
+      `;
       document.getElementById("cp-pts").innerText = `+${m.pts} คะแนน`;
       document.getElementById("cp-art").innerHTML = m.art;
       document.getElementById("cp-story").innerText = m.story;
@@ -1043,15 +1114,19 @@ html_code = """<!DOCTYPE html>
       });
 
       document.getElementById("checkpoint-modal").style.display = "flex";
+      document.getElementById("knowledge-modal").style.display = "none";
     }
 
     function submitAnswer(stageIdx, chosenOpt) {
       const m = missions[stageIdx];
       if (chosenOpt === m.ans) {
-        score += m.pts;
+        // ตอบถูก: ถ้าตอบถูกในครั้งแรก (ไม่มีประวัติตอบผิด) ให้เพิ่มคะแนน
+        if (!checkpointFailedAttempts[stageIdx]) {
+          score += m.pts;
+        }
         playSuccessSound();
 
-        // Turn laser green and pass
+        // ปลดล็อกม่านเลเซอร์
         checkpoints[stageIdx].passed = true;
         checkpoints[stageIdx].laser.material.color.setHex(0x10b981);
         checkpoints[stageIdx].laser.material.opacity = 0.15;
@@ -1062,15 +1137,33 @@ html_code = """<!DOCTYPE html>
         document.getElementById("checkpoint-modal").style.display = "none";
         isModalOpen = false;
 
-        // Advance car past gate
+        // ขยับรถข้ามประตูกั้นไปข้างหน้า
         carPhysics.z -= 4.5;
 
         if (currentStage >= 12) {
           finishGame();
         }
       } else {
-        alert(`❌ ยังไม่ถูกต้องครับ!\n💡 คำใบ้ช่วยเหลือ: ${m.tip}\nโปรดตอบใหม่อีกครั้งเพื่อเปิดม่านเลเซอร์ครับ`);
+        // ตอบผิด: บันทึกว่าด่านนี้เคยตอบผิดแล้ว (ไม่ให้คะแนนเพื่อป้องกันคะแนนเฟ้อ)
+        checkpointFailedAttempts[stageIdx] = true;
+        playWrongSound();
+        showKnowledgeSheet(stageIdx);
       }
+    }
+
+    function showKnowledgeSheet(stageIdx) {
+      const m = missions[stageIdx];
+      document.getElementById("checkpoint-modal").style.display = "none";
+
+      document.getElementById("kn-subject").innerText = m.knTitle;
+      document.getElementById("kn-text").innerHTML = m.knText;
+
+      document.getElementById("knowledge-modal").style.display = "flex";
+    }
+
+    function retryMission() {
+      document.getElementById("knowledge-modal").style.display = "none";
+      openCheckpointModal(activeStageIdx);
     }
 
     function renderMinimap() {
@@ -1081,15 +1174,12 @@ html_code = """<!DOCTYPE html>
 
       mCtx.clearRect(0, 0, mw, mh);
 
-      // Grass
       mCtx.fillStyle = "#15803d";
       mCtx.fillRect(0, 0, mw, mh);
 
-      // Road representation
       mCtx.fillStyle = "#1e293b";
       mCtx.fillRect(mw / 2 - 20, 0, 40, mh);
 
-      // Yellow Center Dash
       mCtx.strokeStyle = "#facc15";
       mCtx.lineWidth = 2;
       mCtx.setLineDash([4, 4]);
@@ -1099,7 +1189,6 @@ html_code = """<!DOCTYPE html>
       mCtx.stroke();
       mCtx.setLineDash([]);
 
-      // Draw Checkpoints
       waypoints.forEach((wp, i) => {
         const relZ = wp.z - carPhysics.z;
         const mapY = mh / 2 + (relZ / 400) * (mh / 2);
@@ -1122,7 +1211,6 @@ html_code = """<!DOCTYPE html>
         }
       });
 
-      // Player Arrow at center
       mCtx.save();
       mCtx.translate(mw / 2 + (carPhysics.x / 14) * 16, mh / 2);
       mCtx.rotate(-carPhysics.angle);
@@ -1145,11 +1233,11 @@ html_code = """<!DOCTYPE html>
       document.getElementById("finish-screen").style.display = "flex";
       document.getElementById("final-score").innerText = `${score} / 20`;
 
-      let rank = "🔰 มือใหม่หัดขับ (ควรทบทวนเนื้อหาเพิ่มเติม)";
-      if (score >= 18) rank = "👑 ยอดนักขับระดับ Master (ยอดเยี่ยมมาก)";
-      else if (score >= 14) rank = "🏆 นักขับเชี่ยวชาญ Microsoft Word";
-      else if (score >= 10) rank = "⭐ ผ่านเกณฑ์การทดสอบ";
-      document.getElementById("final-rank").innerText = rank;
+      let rank = "ผู้ขับขี่ฝึกหัด (ควรทบทวนเนื้อหาเพิ่มเติม)";
+      if (score >= 18) rank = "ยอดนักขับระดับ Master (ยอดเยี่ยมมาก)";
+      else if (score >= 14) rank = "นักขับเชี่ยวชาญ Microsoft Word";
+      else if (score >= 10) rank = "ผ่านเกณฑ์การทดสอบ";
+      document.getElementById("final-rank").innerText = `ระดับ: ${rank}`;
 
       const code = `WR3D-${btoa(playerName).slice(0, 5).toUpperCase()}-${score}PTS-${Date.now().toString().slice(-4)}`;
       document.getElementById("cert-code").innerText = `รหัสยืนยันผลการขับขี่: ${code}`;
@@ -1181,6 +1269,6 @@ html_code = """<!DOCTYPE html>
 """
 
 with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html_code)
+    f.write(updated_code)
 
-print("Updated index.html created successfully!")
+print("Updated index.html with knowledge sheet, no-emoji icons, and strict scoring created!")
