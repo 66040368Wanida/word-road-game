@@ -3,305 +3,668 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Word Road Mission - นักขับมือใหม่ Microsoft Word</title>
+  <title>Word Road GP: ภารกิจซิ่งพิชิต Microsoft Word</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;800;900&family=Nunito:wght@800;900&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif, system-ui; }
-    body { background: #1a1a2e; color: #fff; overflow-x: hidden; touch-action: manipulation; }
-    
-    /* Overlay Screens */
-    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(15, 23, 42, 0.95); z-index: 100; }
-    .card { background: #222943; padding: 25px; border-radius: 20px; max-width: 450px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #3b82f6; text-align: center; }
-    .card h1 { color: #60a5fa; font-size: 1.8rem; margin-bottom: 12px; }
-    .card p { font-size: 0.95rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 15px; }
-    .input-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 1rem; margin-bottom: 15px; }
-    .btn { background: #2563eb; color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; width: 100%; }
-    .btn:active { transform: scale(0.98); background: #1d4ed8; }
+    :root {
+      --primary: #3b82f6;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+      --success: #10b981;
+      --surface: #1e1b4b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; font-family: 'Kanit', sans-serif; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #38bdf8; }
 
-    /* HUD */
-    #hud { position: fixed; top: 0; left: 0; right: 0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 50; }
-    .hud-item { font-size: 1rem; font-weight: bold; color: #93c5fd; }
+    /* Canvas Viewport */
+    #gameCanvas { display: block; width: 100vw; height: 100vh; }
 
-    /* Canvas Map */
-    #gameCanvas { display: block; margin: 0 auto; background: #111827; }
+    /* HUD Top Bar */
+    #hud {
+      position: fixed;
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92%;
+      max-width: 900px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 10px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #fff;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      z-index: 50;
+    }
+    .hud-box { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; font-weight: 800; }
+    .hud-badge { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; padding: 4px 12px; border-radius: 20px; font-family: 'Nunito', sans-serif; }
+    .lives-box svg { fill: #ef4444; filter: drop-shadow(0 0 5px rgba(239, 68, 68, 0.8)); }
 
-    /* Modal Question */
-    #quiz-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; padding: 15px; z-index: 150; }
-    .quiz-card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 500px; border: 2px solid #eab308; }
-    .quiz-tag { display: inline-block; background: #eab308; color: #000; font-weight: bold; font-size: 0.8rem; padding: 4px 8px; border-radius: 5px; margin-bottom: 10px; }
-    .quiz-q { font-size: 1.1rem; margin-bottom: 15px; }
-    .quiz-opt { display: flex; flex-direction: column; gap: 10px; }
-    .opt-btn { background: #334155; border: 1px solid #475569; padding: 12px; color: #fff; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.95rem; }
-    .opt-btn:hover { background: #475569; }
+    /* Screens & Modals */
+    .screen {
+      position: fixed; inset: 0;
+      background: radial-gradient(circle at center, rgba(30, 27, 75, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%);
+      display: flex; justify-content: center; align-items: center; padding: 20px;
+      z-index: 100;
+    }
+    .game-card {
+      background: linear-gradient(180deg, #2e1065 0%, #1e1b4b 100%);
+      border: 4px solid #facc15;
+      border-radius: 28px;
+      padding: 30px;
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(250, 204, 21, 0.3);
+      color: #fff;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    /* Mobile Controls */
-    #touch-controls { position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 25px; z-index: 50; }
-    .ctrl-btn { width: 75px; height: 75px; border-radius: 50%; background: rgba(37, 99, 235, 0.85); border: 2px solid #60a5fa; color: white; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; user-select: none; }
+    .title-banner {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #facc15;
+      text-shadow: 0 4px 0 #92400e, 0 8px 15px rgba(0,0,0,0.5);
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .input-field {
+      width: 100%;
+      padding: 14px 18px;
+      border-radius: 14px;
+      border: 2px solid #818cf8;
+      background: #0f172a;
+      color: #fff;
+      font-size: 1.1rem;
+      outline: none;
+      margin: 15px 0;
+      text-align: center;
+      transition: 0.2s;
+    }
+    .input-field:focus { border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.5); }
+
+    .game-btn {
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+      color: #fff;
+      border: none;
+      font-size: 1.25rem;
+      font-weight: 800;
+      padding: 14px 30px;
+      border-radius: 16px;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 6px 0 #047857, 0 10px 20px rgba(0,0,0,0.4);
+      transition: 0.15s ease;
+    }
+    .game-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #047857; }
+
+    /* Quiz Modal */
+    #quiz-modal {
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      display: none; justify-content: center; align-items: center; padding: 15px;
+      z-index: 120;
+    }
+    .quiz-card {
+      background: #1e1b4b;
+      border: 3px solid #38bdf8;
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 520px;
+      width: 100%;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      color: #fff;
+    }
+    .quiz-tag {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 900;
+      padding: 4px 12px;
+      border-radius: 8px;
+      display: inline-block;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+    }
+    .quiz-title { font-size: 1.2rem; font-weight: 800; margin-bottom: 16px; line-height: 1.4; color: #f8fafc; }
+    .quiz-options { display: flex; flex-direction: column; gap: 10px; }
+    .opt-btn {
+      background: #312e81;
+      border: 2px solid #4338ca;
+      color: #e2e8f0;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .opt-btn:hover { background: #4338ca; border-color: #facc15; transform: translateX(5px); }
+
+    /* Virtual Gamepad (Console Style) */
+    #touch-controls {
+      position: fixed;
+      bottom: 25px;
+      left: 0; right: 0;
+      display: flex;
+      justify-content: space-between;
+      padding: 0 35px;
+      pointer-events: none;
+      z-index: 80;
+    }
+    .d-pad, .pedals { pointer-events: auto; display: flex; gap: 15px; align-items: center; }
+    .pad-btn {
+      width: 68px; height: 68px;
+      background: rgba(30, 27, 75, 0.75);
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(255,255,255,0.1);
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: 0.1s;
+    }
+    .pad-btn:active { transform: scale(0.92); border-color: #facc15; background: rgba(250, 204, 21, 0.4); }
+    .pad-btn svg { width: 32px; height: 32px; fill: #ffffff; }
   </style>
 </head>
 <body>
 
-  <!-- Screen 1: เข้าสู่เกม -->
+  <!-- จอเริ่มเกม & แนะนำ -->
   <div id="start-screen" class="screen">
-    <div class="card">
-      <h1>🚗 Word Road</h1>
-      <p>ยินดีต้อนรับสู่สนามทดสอบทักษะ Microsoft Word 12 ด่าน ขับรถตามเส้นทางเพื่อฝ่าด่านภารกิจให้ครบ</p>
-      <div style="background: #0f172a; border-radius: 8px; padding: 10px; margin-bottom: 15px; text-align: left; font-size: 0.85rem; color: #94a3b8;">
-        🕹️ <b>การบังคับ:</b><br>
-        - คอมพิวเตอร์: กดปุ่มลูกศร <b>⬆️ ขับหน้า</b> / <b>⬇️ ถอยหลัง</b><br>
-        - มือถือ / แท็บเล็ต: กดปุ่มสัมผัสลูกศรด้านล่างหน้าจอ
+    <div class="game-card">
+      <div class="title-banner">🏎️ WORD ROAD GP</div>
+      <p style="color: #cbd5e1; font-size: 0.95rem; margin-bottom: 12px;">ภารกิจซิ่งตรวจรับใบขับขี่ Microsoft Word ผ่าน 12 ด่านหฤหรรษ์ พร้อมฝ่าอุปสรรคบนเส้นทาง!</p>
+      
+      <div style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 12px; text-align: left; font-size: 0.85rem; color: #93c5fd; margin-bottom: 14px;">
+        🎮 <b>วิธีควบคุมการขับ:</b><br>
+        • <b>PC:</b> ปุ่มลูกศร <b>[ ⬆️ คันเร่ง ]</b> <b>[ ⬇️ เบรก ]</b> <b>[ ⬅️ ➡️ เลี้ยวหลบ ]</b><br>
+        • <b>มือถือ / แท็บเล็ต:</b> สัมผัส D-Pad เลี้ยว และ แป้นเหยียบคันเร่ง ด้านล่างจอ<br>
+        ⚠️ <i>ระวังกรวยและคราบน้ำมันบนถนน ชนแล้วรถจะหมุนและแต้มหัก!</i>
       </div>
-      <input type="text" id="player-name" class="input-box" placeholder="กรอกชื่อ-นามสกุล / ชั้นเลขที่..." />
-      <button class="btn" onclick="startGame()">เริ่มขับรถเลย 🏁</button>
+
+      <input type="text" id="player-name" class="input-field" placeholder="กรอกชื่อ-นามสกุล / ชั้นและเลขที่" />
+      <button class="game-btn" onclick="initGame()">เริ่มการแข่งขัน 🏁</button>
     </div>
   </div>
 
-  <!-- HUD Status -->
+  <!-- HUD Bar -->
   <div id="hud">
-    <div class="hud-item" id="hud-name">👤 ผู้เล่น: -</div>
-    <div class="hud-item" id="hud-stage">ด่าน: 1/12</div>
-    <div class="hud-item" id="hud-score">คะแนน: 0/20</div>
+    <div class="hud-box">
+      <span id="hud-name">👤 นักขับ: ผู้เล่น</span>
+    </div>
+    <div class="hud-box lives-box" id="hud-lives">
+      <svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <span id="lives-val">3</span>
+    </div>
+    <div class="hud-box">
+      <span>ด่าน:</span>
+      <span class="hud-badge" id="hud-stage">1 / 12</span>
+    </div>
+    <div class="hud-box">
+      <span style="color:#facc15;">คะแนน:</span>
+      <span class="hud-badge" id="hud-score" style="background:#10b981;">0 / 20</span>
+    </div>
   </div>
 
-  <!-- Canvas Scene -->
+  <!-- Main Canvas -->
   <canvas id="gameCanvas"></canvas>
 
-  <!-- Touch Buttons -->
+  <!-- Virtual Gamepad (Mobile) -->
   <div id="touch-controls">
-    <div class="ctrl-btn" id="btn-back">⬇️</div>
-    <div class="ctrl-btn" id="btn-forward">⬆️</div>
+    <div class="d-pad">
+      <div class="pad-btn" id="btn-left">
+        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+      </div>
+      <div class="pad-btn" id="btn-right">
+        <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+      </div>
+    </div>
+    <div class="pedals">
+      <div class="pad-btn" id="btn-down" style="background: rgba(239, 68, 68, 0.5);">
+        <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+      </div>
+      <div class="pad-btn" id="btn-up" style="background: rgba(16, 185, 129, 0.6); width: 78px; height: 78px;">
+        <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
+      </div>
+    </div>
   </div>
 
   <!-- Modal Question -->
   <div id="quiz-modal">
     <div class="quiz-card">
-      <div class="quiz-tag" id="q-tag">Checkpoint</div>
-      <h3 class="quiz-q" id="q-title">คำถามประจำด่าน</h3>
-      <div class="quiz-opt" id="q-options"></div>
+      <div class="quiz-tag" id="modal-tag">CHECKPOINT 1</div>
+      <div class="quiz-title" id="modal-q">คำถามกำลังโหลด...</div>
+      <div class="quiz-options" id="modal-opts"></div>
     </div>
   </div>
 
-  <!-- Screen 3: จบภารกิจ -->
-  <div id="end-screen" class="screen" style="display: none;">
-    <div class="card">
-      <h1>🏆 จบภารกิจ!</h1>
-      <p id="end-msg">คุณผ่านเส้นทาง Word Road ครบทุกด่านแล้ว</p>
-      <h2 id="final-score" style="color: #4ade80; margin: 15px 0;">0 / 20 คะแนน</h2>
-      <p id="save-status" style="font-size: 0.85rem; color: #cbd5e1;">กำลังบันทึกคะแนนเข้าสู่ระบบคุณครู...</p>
+  <!-- จบการแข่งขัน & รับใบประกาศ -->
+  <div id="end-screen" class="screen" style="display:none;">
+    <div class="game-card">
+      <div class="title-banner" style="color: #4ade80;">🏆 FINISH LINE!</div>
+      <p>ยินดีด้วย! คุณพาพาหนะเข้าสู่เส้นชัย Word Road ครบ 12 สถานี</p>
+      
+      <div style="margin: 20px 0; background: #0f172a; border-radius: 16px; padding: 15px; border: 2px dashed #facc15;">
+        <div style="font-size: 0.9rem; color: #94a3b8;">คะแนนรวมของคุณ</div>
+        <div id="end-score-val" style="font-size: 2.5rem; font-weight: 900; color: #facc15;">0 / 20</div>
+        <div id="end-badge-name" style="font-weight: 800; color: #38bdf8;">ระดับ: มือโปรเอกสาร</div>
+      </div>
+
+      <div style="background: #111827; padding: 12px; border-radius: 10px; font-size: 0.8rem; margin-bottom: 15px; color: #cbd5e1; word-break: break-all;" id="report-code">
+        รหัสยืนยันผล: WR-GENERATING...
+      </div>
+
+      <div id="sync-status" style="font-size: 0.85rem; color: #38bdf8; margin-bottom: 15px;">
+        🔄 กำลังเชื่อมโยงบันทึกส่งครู...
+      </div>
+      <button class="game-btn" onclick="location.reload()">เล่นทบทวนอีกครั้ง 🔄</button>
     </div>
   </div>
 
   <script>
-    // ** ใส่ Web App URL ของ Google Apps Script ตรงนี้ **
+    // URL Google Web App สำหรับรับผลคะแนนเข้า Sheet
     const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
 
-    const questions = [
-      { id: 1, title: "ด่าน 1: รู้จัก Microsoft Word", q: "ชนิดไฟล์เอกสารมาตรฐานของ Microsoft Word ยุคปัจจุบันคือนามสกุลใด", pts: 1, opt: ["A. .xlsx", "B. .docx", "C. .pptx", "D. .txt"], ans: 1 },
-      { id: 2, title: "ด่าน 2: สร้าง/บันทึกเอกสาร", q: "แป้นพิมพ์ลัดใดใช้สำหรับ “บันทึกเอกสาร (Save)” ทันที", pts: 1, opt: ["A. Ctrl + C", "B. Ctrl + S", "C. Ctrl + P", "D. Ctrl + Z"], ans: 1 },
-      { id: 3, title: "ด่าน 3: พิมพ์และแก้ไขข้อความ", q: "หากต้องการยกเลิกคำสั่งหรือกู้ข้อความที่ลบทิ้ง (Undo) ต้องใช้คำสั่งใด", pts: 1, opt: ["A. Ctrl + Z", "B. Ctrl + Y", "C. Ctrl + X", "D. Ctrl + V"], ans: 0 },
-      { id: 4, title: "ด่าน 4: จัดรูปแบบตัวอักษร", q: "สัญลักษณ์ตัวไอคอน 'B' ในแถบเครื่องมือมีหน้าที่ทำอะไร", pts: 1, opt: ["A. เอียงข้อความ", "B. ขีดเส้นใต้", "C. ทำให้ข้อความหนา", "D. ใส่สีไฮไลต์"], ans: 2 },
-      { id: 5, title: "ด่าน 5: จัดย่อหน้า", q: "หากต้องการจัดหัวข้อให้อยู่ 'ตรงกลางหน้ากระดาษ' ต้องเลือกคำสั่งใด", pts: 2, opt: ["A. Align Left", "B. Center (Ctrl+E)", "C. Align Right", "D. Justify"], ans: 1 },
-      { id: 6, title: "ด่าน 6: Bullets & Numbering", q: "เมื่อต้องการใส่จุดสัญลักษณ์แสดงหัวข้อย่อยแบบไม่มีลำดับเลข ต้องใช้ฟังก์ชันใด", pts: 1, opt: ["A. Numbering", "B. Multilevel", "C. Bullets", "D. Indent"], ans: 2 },
-      { id: 7, title: "ด่าน 7: แทรกรูปภาพ", q: "เมนูหลักแถบใดที่ใช้สำหรับการนำภาพภายนอกเข้ามาใส่ในเอกสาร", pts: 2, opt: ["A. หน้าแรก (Home)", "B. แทรก (Insert)", "C. เค้าโครง (Layout)", "D. ออกแบบ (Design)"], ans: 1 },
-      { id: 8, title: "ด่าน 8: ตาราง (Table)", q: "หากต้องการรวมช่องตาราง 2 ช่องเข้าด้วยกันให้เป็นเซลล์เดียว ใช้คำสั่งใด", pts: 2, opt: ["A. Split Cells", "B. Delete Cells", "C. Merge Cells", "D. AutoFit"], ans: 2 },
-      { id: 9, title: "ด่าน 9: ตั้งค่าหน้ากระดาษ", q: "การเปลี่ยนเอกสารจากกระดาษแนวตั้งให้เป็นแนวนอน เข้าไปที่คำสั่งใด", pts: 2, opt: ["A. Orientation ใน Layout", "B. Margins", "C. Size", "D. Columns"], ans: 0 },
-      { id: 10, title: "ด่าน 10: ตรวจสอบเอกสาร", q: "เครื่องมือ Find & Replace สำหรับค้นหาคำผิดแล้วแทนที่ด้วยคำใหม่ ใช้คีย์ลัดใด", pts: 2, opt: ["A. Ctrl + F", "B. Ctrl + H", "C. Ctrl + K", "D. Ctrl + G"], ans: 1 },
-      { id: 11, title: "ด่าน 11: จัดรูปแบบเอกสาร", q: "ต้องการเว้นหน้ากระดาษขึ้นแผ่นใหม่ทันทีโดยไม่เคาะ Enter ซ้ำๆ ควรใส่สิ่งใด", pts: 2, opt: ["A. Line Break", "B. Page Break", "C. Section Break", "D. Column Break"], ans: 1 },
-      { id: 12, title: "ด่าน 12: ภารกิจประยุกต์", q: "ฟังก์ชันใดใช้สร้างจดหมายเวียนเพื่อส่งเกียรติบัตรหรือเอกสารให้คนจำนวนมาก", pts: 3, opt: ["A. References", "B. Review", "C. Mailings", "D. Add-ins"], ans: 2 }
+    // 12 Checkpoint & Mission
+    const levels = [
+      { id: 1, title: "รู้จัก Microsoft Word", pts: 1, q: "ชนิดไฟล์เอกสารมาตรฐานของ Microsoft Word รุ่นปัจจุบันคือนามสกุลใด?", opts: [".xlsx", ".docx", ".pptx", ".txt"], ans: 1 },
+      { id: 2, title: "สร้างและบันทึก", pts: 1, q: "ปุ่มคีย์ลัดบนคีย์บอร์ดที่ใช้สำหรับ 'บันทึกเอกสารด่วน (Save)' คืออะไร?", opts: ["Ctrl + C", "Ctrl + S", "Ctrl + P", "Ctrl + A"], ans: 1 },
+      { id: 3, title: "แก้ไขข้อความ", pts: 1, q: "เมื่อเผลอลบข้อความสำคัญทิ้ง ปุ่มยกเลิกคำสั่งย้อนกลับ (Undo) คือข้อใด?", opts: ["Ctrl + Z", "Ctrl + Y", "Ctrl + X", "Ctrl + V"], ans: 0 },
+      { id: 4, title: "จัดฟอนต์ตัวอักษร", pts: 1, q: "ไอคอนปุ่มสัญลักษณ์ 'B' บนแถบคำสั่ง Ribbon ทำหน้าที่อะไร?", opts: ["ตัวเอียง", "ขีดเส้นใต้", "ทำให้ตัวหนา", "เปลี่ยนสีพื้น"], ans: 2 },
+      { id: 5, title: "จัดย่อหน้า (Paragraph)", pts: 2, q: "การจัดหัวข้อรายงานให้อยู่ 'กึ่งกลางกระดาษพอดี' ใช้ปุ่มจัดแนวใด?", opts: ["Align Left (Ctrl+L)", "Center (Ctrl+E)", "Align Right (Ctrl+R)", "Justify (Ctrl+J)"], ans: 1 },
+      { id: 6, title: "สัญลักษณ์หัวข้อ", pts: 1, q: "ต้องการสร้างลิสต์รายการแบบมีจุดกลมข้างหน้า (ไม่ใส่เลข 1,2,3) ต้องใช้คำสั่งใด?", opts: ["Bullets", "Numbering", "Multilevel List", "Indent"], ans: 0 },
+      { id: 7, title: "แทรกภาพประกอบ", pts: 2, q: "เมนูหลักแท็บใดบนแถบ Ribbon ใช้สำหรับการนำรูปภาพจากคอมฯ เข้ามาวาง?", opts: ["หน้าแรก (Home)", "แทรก (Insert)", "เค้าโครง (Layout)", "มุมมอง (View)"], ans: 1 },
+      { id: 8, title: "สร้างตารางข้อมูล", pts: 2, q: "ต้องการยุบช่องตาราง 2 ช่องเข้าด้วยกันให้เป็นช่องเดียว ใช้ฟังก์ชันใดในตาราง?", opts: ["Split Cells", "Merge Cells", "Delete Row", "AutoFit"], ans: 1 },
+      { id: 9, title: "ตั้งค่าหน้ากระดาษ", pts: 2, q: "การเปลี่ยนเอกสารจากแนวตั้งเป็น 'แนวนอน' ต้องปรับที่คำสั่งใด?", opts: ["Orientation ในแถบ Layout", "Margins", "Paper Size", "Columns"], ans: 0 },
+      { id: 10, title: "ค้นหาและแทนที่", pts: 2, q: "คีย์ลัดสำหรับเปิดหน้าต่าง Find & Replace เพื่อค้นหาคำผิดแล้วแก้ทีเดียวทั้งฉบับคือ?", opts: ["Ctrl + F", "Ctrl + H", "Ctrl + G", "Ctrl + Shift + S"], ans: 1 },
+      { id: 11, title: "ตัวแบ่งหน้ากระดาษ", pts: 2, q: "การขึ้นหน้าใหม่ทันทีโดยไม่ใช้วิธีเคาะปุ่ม Enter หลายๆ ครั้ง ควรใช้คำสั่งใด?", opts: ["Page Break (Ctrl+Enter)", "Line Break", "Text Wrap", "Section Break"], ans: 0 },
+      { id: 12, title: "จดหมายเวียนประยุกต์", pts: 3, q: "ฟังก์ชัน Mail Merge สำหรับสร้างเกียรติบัตรหรือซองจดหมายส่งคนจำนวนมาก อยู่ในแท็บใด?", opts: ["รีวิว (Review)", "การส่งจดหมาย (Mailings)", "อ้างอิง (References)", "ส่วนเสริม (Add-ins)"], ans: 1 }
     ];
 
-    let playerName = "";
+    let canvas, ctx;
+    let playerName = "Player";
     let score = 0;
+    let lives = 3;
     let currentStage = 0;
-    let progress = 0; // 0.0 ถึง 12.0
-    let isModalOpen = false;
+    let isQuizActive = false;
+    let isGameOver = false;
 
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    // ระบบขับขี่
+    let car = {
+      x: 0, y: 0,
+      targetX: 0,
+      angle: 0,
+      speed: 0,
+      maxSpeed: 5,
+      accel: 0.15,
+      friction: 0.05,
+      progress: 0, // 0 ถึง 12
+      spinTimer: 0
+    };
 
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resize);
-    resize();
+    // อินพุต
+    let keys = { up: false, down: false, left: false, right: false };
 
-    function startGame() {
-      const nameInput = document.getElementById("player-name").value.trim();
-      if (!nameInput) {
-        alert("กรุณากรอกชื่อก่อนเริ่มเล่นครับ");
-        return;
-      }
-      playerName = nameInput;
+    // จุดทางผ่านและอุปสรรค
+    let roadPoints = [];
+    let obstacles = [];
+
+    function initGame() {
+      const name = document.getElementById("player-name").value.trim();
+      if (!name) { alert("กรุณาใส่ชื่อก่อนเริ่มสนุกกันครับ!"); return; }
+      playerName = name;
       document.getElementById("hud-name").innerText = `👤 ${playerName}`;
       document.getElementById("start-screen").style.display = "none";
+
+      canvas = document.getElementById("gameCanvas");
+      ctx = canvas.getContext("2d");
+      window.addEventListener("resize", resizeMap);
+      resizeMap();
+      setupControls();
+      spawnObstacles();
+      requestAnimationFrame(gameLoop);
     }
 
-    // Controls
-    let moveForward = false;
-    let moveBack = false;
+    function resizeMap() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      buildRoadNetwork();
+    }
 
-    window.addEventListener("keydown", e => {
-      if (e.key === "ArrowUp" || e.key === "ArrowRight") moveForward = true;
-      if (e.key === "ArrowDown" || e.key === "ArrowLeft") moveBack = true;
-    });
-    window.addEventListener("keyup", e => {
-      if (e.key === "ArrowUp" || e.key === "ArrowRight") moveForward = false;
-      if (e.key === "ArrowDown" || e.key === "ArrowLeft") moveBack = false;
-    });
-
-    const fBtn = document.getElementById("btn-forward");
-    const bBtn = document.getElementById("btn-back");
-    fBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveForward = true; });
-    fBtn.addEventListener("touchend", () => moveForward = false);
-    bBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveBack = true; });
-    bBtn.addEventListener("touchend", () => moveBack = false);
-
-    // Map Path Nodes (12 Checkpoints + Start)
-    function getRoadNode(index) {
+    function buildRoadNetwork() {
+      roadPoints = [];
+      const totalStages = 12;
       const w = canvas.width;
       const h = canvas.height;
-      const paddingX = w * 0.1;
-      const stepY = (h - 180) / 12;
-      const y = (h - 90) - (index * stepY);
-      const isEven = index % 2 === 0;
-      const x = isEven ? paddingX + (w * 0.15) : w - paddingX - (w * 0.15);
-      return { x, y };
+      
+      // คำนวณเส้นทางโค้ง S-Curve 12 สถานีจากล่างขึ้นบน
+      for (let i = 0; i <= totalStages; i++) {
+        const t = i / totalStages;
+        const py = (h - 100) - t * (h - 180);
+        // ถนนคดเคี้ยวไปมา
+        const px = (w * 0.5) + Math.sin(i * 1.3) * (w * 0.32);
+        roadPoints.push({ x: px, y: py, stage: i });
+      }
+
+      // วางตำแหน่งรถเริ่มต้น
+      car.x = roadPoints[0].x;
+      car.y = roadPoints[0].y;
+    }
+
+    function spawnObstacles() {
+      obstacles = [];
+      // สุ่มสร้างกรวยและคราบน้ำมันระหว่างทาง 14 จุด
+      for (let i = 1; i <= 14; i++) {
+        obstacles.push({
+          progress: 0.3 + i * 0.8,
+          offset: (Math.random() - 0.5) * 50,
+          type: Math.random() > 0.5 ? 'cone' : 'oil',
+          hit: false
+        });
+      }
+    }
+
+    function setupControls() {
+      window.addEventListener("keydown", e => {
+        if (e.key === "ArrowUp" || e.key === "w") keys.up = true;
+        if (e.key === "ArrowDown" || e.key === "s") keys.down = true;
+        if (e.key === "ArrowLeft" || e.key === "a") keys.left = true;
+        if (e.key === "ArrowRight" || e.key === "d") keys.right = true;
+      });
+      window.addEventListener("keyup", e => {
+        if (e.key === "ArrowUp" || e.key === "w") keys.up = false;
+        if (e.key === "ArrowDown" || e.key === "s") keys.down = false;
+        if (e.key === "ArrowLeft" || e.key === "a") keys.left = false;
+        if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
+      });
+
+      // ปุ่มสัมผัส
+      const bindTouch = (id, key) => {
+        const el = document.getElementById(id);
+        el.addEventListener("touchstart", e => { e.preventDefault(); keys[key] = true; });
+        el.addEventListener("touchend", e => { e.preventDefault(); keys[key] = false; });
+      };
+      bindTouch("btn-up", "up");
+      bindTouch("btn-down", "down");
+      bindTouch("btn-left", "left");
+      bindTouch("btn-right", "right");
+    }
+
+    function gameLoop() {
+      update();
+      render();
+      if (!isGameOver) requestAnimationFrame(gameLoop);
     }
 
     function update() {
-      if (!isModalOpen && currentStage < 12) {
-        if (moveForward) {
-          progress += 0.04;
-          if (progress >= currentStage + 1) {
-            progress = currentStage + 1;
-            openQuiz(currentStage);
+      if (isQuizActive) return;
+
+      // รถกำลังหมุนจากการชนอุปสรรค
+      if (car.spinTimer > 0) {
+        car.spinTimer--;
+        car.angle += 0.3;
+        car.speed *= 0.9;
+        return;
+      }
+
+      // ระบบคันเร่งและความเร็ว
+      if (keys.up) car.speed += car.accel;
+      else if (keys.down) car.speed -= car.accel * 1.5;
+      else car.speed -= car.friction;
+
+      car.speed = Math.max(0, Math.min(car.speed, car.maxSpeed));
+
+      // คำนวณตำแหน่งบนเส้นทาง
+      if (car.speed > 0) {
+        car.progress += car.speed * 0.0035;
+
+        // เช็คผ่านด่าน
+        if (car.progress >= currentStage + 1 && currentStage < 12) {
+          car.progress = currentStage + 1;
+          car.speed = 0;
+          triggerQuiz(currentStage);
+          return;
+        }
+      }
+
+      // อัปเดตพิกัดรถตามเส้นทาง
+      const idx = Math.floor(car.progress);
+      const nextIdx = Math.min(idx + 1, roadPoints.length - 1);
+      const fraction = car.progress - idx;
+      
+      const p1 = roadPoints[idx];
+      const p2 = roadPoints[nextIdx];
+
+      // การเลี้ยวเบี่ยงซ้ายขวาของคนเล่น
+      if (keys.left) car.targetX -= 2.5;
+      if (keys.right) car.targetX += 2.5;
+      car.targetX = Math.max(-45, Math.min(45, car.targetX));
+
+      const basePathX = p1.x + (p2.x - p1.x) * fraction;
+      car.x = basePathX + car.targetX;
+      car.y = p1.y + (p2.y - p1.y) * fraction;
+
+      // หมุนหน้ารถไปตามทาง
+      const roadAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x) + Math.PI / 2;
+      car.angle = roadAngle + (car.targetX * 0.008);
+
+      // เช็คการชนอุปสรรค
+      obstacles.forEach(ob => {
+        if (!ob.hit && Math.abs(car.progress - ob.progress) < 0.12) {
+          if (Math.abs(car.targetX - ob.offset) < 26) {
+            ob.hit = true;
+            triggerHitObstacle(ob.type);
           }
         }
-        if (moveBack) {
-          progress -= 0.04;
-          if (progress < currentStage) progress = currentStage;
-        }
-      }
+      });
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      // เส้นถนนเชื่อมต่อ
-      ctx.beginPath();
-      ctx.lineWidth = 40;
-      ctx.strokeStyle = "#334155";
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      for (let i = 0; i <= 12; i++) {
-        const node = getRoadNode(i);
-        if (i === 0) ctx.moveTo(node.x, node.y);
-        else ctx.lineTo(node.x, node.y);
-      }
-      ctx.stroke();
-
-      // เส้นประกลางถนน
-      ctx.beginPath();
-      ctx.lineWidth = 3;
-      ctx.setLineDash([10, 10]);
-      ctx.strokeStyle = "#facc15";
-      for (let i = 0; i <= 12; i++) {
-        const node = getRoadNode(i);
-        if (i === 0) ctx.moveTo(node.x, node.y);
-        else ctx.lineTo(node.x, node.y);
-      }
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      // วาด Checkpoints
-      for (let i = 1; i <= 12; i++) {
-        const node = getRoadNode(i);
-        ctx.beginPath();
-        ctx.arc(node.x, node.y, 18, 0, Math.PI * 2);
-        ctx.fillStyle = i <= currentStage ? "#22c55e" : "#64748b";
-        ctx.fill();
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = "#ffffff";
-        ctx.stroke();
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "bold 12px Kanit";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(i, node.x, node.y);
-      }
-
-      // ตำแหน่งรถตาม Progress
-      const baseIndex = Math.floor(progress);
-      const nextIndex = Math.min(baseIndex + 1, 12);
-      const factor = progress - baseIndex;
-      const p1 = getRoadNode(baseIndex);
-      const p2 = getRoadNode(nextIndex);
-      const carX = p1.x + (p2.x - p1.x) * factor;
-      const carY = p1.y + (p2.y - p1.y) * factor;
-
-      // รถมินิมอล
-      ctx.save();
-      ctx.translate(carX, carY);
-      ctx.fillStyle = "#ef4444";
-      ctx.fillRect(-12, -18, 24, 36);
-      ctx.fillStyle = "#38bdf8";
-      ctx.fillRect(-9, -8, 18, 12);
-      ctx.restore();
-
-      update();
-      requestAnimationFrame(draw);
-    }
-    requestAnimationFrame(draw);
-
-    function openQuiz(stageIdx) {
-      isModalOpen = true;
-      const qData = questions[stageIdx];
-      document.getElementById("q-tag").innerText = `Checkpoint ${stageIdx + 1} (${qData.pts} คะแนน)`;
-      document.getElementById("q-title").innerText = `${qData.title}\n\n${qData.q}`;
+    function triggerHitObstacle(type) {
+      car.spinTimer = 40; // รถหมุน
+      car.speed = -2;
+      lives = Math.max(0, lives - 1);
+      document.getElementById("lives-val").innerText = lives;
       
-      const optContainer = document.getElementById("q-options");
-      optContainer.innerHTML = "";
-      qData.opt.forEach((text, idx) => {
-        const b = document.createElement("button");
-        b.className = "opt-btn";
-        b.innerText = text;
-        b.onclick = () => answerQuestion(idx);
-        optContainer.appendChild(b);
+      // เอฟเฟกต์สั่นหน้าจอ
+      canvas.style.transform = "translateX(6px)";
+      setTimeout(() => canvas.style.transform = "translateX(-6px)", 60);
+      setTimeout(() => canvas.style.transform = "none", 120);
+    }
+
+    function triggerQuiz(stageIdx) {
+      isQuizActive = true;
+      const data = levels[stageIdx];
+      document.getElementById("modal-tag").innerText = `CHECKPOINT ${stageIdx + 1} (${data.pts} แต้ม)`;
+      document.getElementById("modal-q").innerText = `${data.title}\n\n${data.q}`;
+
+      const container = document.getElementById("modal-opts");
+      container.innerHTML = "";
+      data.opts.forEach((txt, i) => {
+        const btn = document.createElement("button");
+        btn.className = "opt-btn";
+        btn.innerText = `${['A','B','C','D'][i]}. ${txt}`;
+        btn.onclick = () => submitAnswer(i);
+        container.appendChild(btn);
       });
 
       document.getElementById("quiz-modal").style.display = "flex";
     }
 
-    function answerQuestion(selectedIdx) {
-      const qData = questions[currentStage];
-      if (selectedIdx === qData.ans) {
-        score += qData.pts;
-        alert("🎉 ยอดเยี่ยม! คำตอบถูกต้อง");
-      } else {
-        alert("❌ ยังไม่ถูกต้อง พยายามใหม่ในรอบถัดไปนะครับ");
+    function submitAnswer(chosen) {
+      const data = levels[currentStage];
+      if (chosen === data.ans) {
+        score += data.pts;
       }
-
       document.getElementById("quiz-modal").style.display = "none";
       currentStage++;
-      document.getElementById("hud-stage").innerText = `ด่าน: ${Math.min(currentStage + 1, 12)}/12`;
-      document.getElementById("hud-score").innerText = `คะแนน: ${score}/20`;
-      isModalOpen = false;
 
-      if (currentStage >= 12) {
-        finishGame();
+      document.getElementById("hud-stage").innerText = `${Math.min(currentStage + 1, 12)} / 12`;
+      document.getElementById("hud-score").innerText = `${score} / 20`;
+      isQuizActive = false;
+
+      if (currentStage >= 12) finishGame();
+    }
+
+    function render() {
+      // 1. ทุ่งหญ้าสีเขียวสดใส
+      ctx.fillStyle = "#84cc16";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // รายละเอียดพื้นหญ้า
+      ctx.fillStyle = "#65a30d";
+      for (let i = 0; i < canvas.width; i += 80) {
+        ctx.fillRect(i + (currentStage * 5 % 40), 20, 15, 6);
+        ctx.fillRect(i - 20, canvas.height - 120, 20, 8);
       }
+
+      // 2. ขอบทาง Curb หมากรุกแดง-ขาว
+      ctx.beginPath();
+      ctx.lineWidth = 110;
+      ctx.strokeStyle = "#dc2626";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      roadPoints.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.lineWidth = 100;
+      ctx.strokeStyle = "#f8fafc";
+      roadPoints.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+
+      // 3. ผิวถนนลาดยางมะตอย
+      ctx.beginPath();
+      ctx.lineWidth = 84;
+      ctx.strokeStyle = "#334155";
+      roadPoints.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+
+      // เส้นประกลางถนนสีเหลืองสด
+      ctx.beginPath();
+      ctx.lineWidth = 4;
+      ctx.setLineDash([16, 16]);
+      ctx.strokeStyle = "#facc15";
+      roadPoints.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 4. วาด Checkpoint Gate แต่ละด่าน
+      roadPoints.slice(1).forEach((p, idx) => {
+        const passed = idx < currentStage;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+        ctx.fillStyle = passed ? "#10b981" : "#f59e0b";
+        ctx.fill();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 13px Kanit";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(idx + 1, p.x, p.y);
+      });
+
+      // 5. วาดอุปสรรค (Cones & Oil)
+      obstacles.forEach(ob => {
+        if (ob.hit) return;
+        const idx = Math.floor(ob.progress);
+        if (idx >= roadPoints.length - 1) return;
+        const p1 = roadPoints[idx];
+        const p2 = roadPoints[idx + 1];
+        const f = ob.progress - idx;
+        const ox = p1.x + (p2.x - p1.x) * f + ob.offset;
+        const oy = p1.y + (p2.y - p1.y) * f;
+
+        if (ob.type === 'cone') {
+          // กรวยจราจร
+          ctx.fillStyle = "#ea580c";
+          ctx.beginPath();
+          ctx.moveTo(ox, oy - 14);
+          ctx.lineTo(ox + 9, oy + 7);
+          ctx.lineTo(ox - 9, oy + 7);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(ox - 5, oy - 4, 10, 3);
+        } else {
+          // คราบน้ำมันลื่น
+          ctx.fillStyle = "#09090b";
+          ctx.beginPath();
+          ctx.ellipse(ox, oy, 13, 8, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      // 6. วาดตัวรถแข่งแบบการ์ตูน (Sport Kart)
+      ctx.save();
+      ctx.translate(car.x, car.y);
+      ctx.rotate(car.angle);
+
+      // เงารถ
+      ctx.fillStyle = "rgba(0,0,0,0.3)";
+      ctx.fillRect(-14, -18, 28, 44);
+
+      // ล้อรถ 4 ข้าง
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(-17, -15, 6, 10);
+      ctx.fillRect(11, -15, 6, 10);
+      ctx.fillRect(-17, 8, 6, 11);
+      ctx.fillRect(11, 8, 6, 11);
+
+      // ตัวถังรถสีแดงสปอร์ต
+      ctx.fillStyle = "#ef4444";
+      ctx.beginPath();
+      ctx.roundRect(-13, -17, 26, 38, 8);
+      ctx.fill();
+
+      // สปอยเลอร์หลัง
+      ctx.fillStyle = "#991b1b";
+      ctx.fillRect(-14, 14, 28, 5);
+
+      // กระจกหน้าบังลม
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.roundRect(-9, -10, 18, 12, 4);
+      ctx.fill();
+
+      // หมวกกันน็อกคนขับ
+      ctx.fillStyle = "#facc15";
+      ctx.beginPath();
+      ctx.arc(0, 2, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
     }
 
     function finishGame() {
+      isGameOver = true;
       document.getElementById("end-screen").style.display = "flex";
-      document.getElementById("final-score").innerText = `${score} / 20 คะแนน`;
-      sendScoreToSheet();
+      document.getElementById("end-score-val").innerText = `${score} / 20`;
+      
+      const badge = score >= 16 ? "🏆 ผู้เชี่ยวชาญ Microsoft Word ขั้นสูง" :
+                    score >= 12 ? "🥇 นักขับเอกสารระดับมาตรฐาน" : "🔰 มือใหม่หัดขับ (ควรทบทวนอีกครั้ง)";
+      document.getElementById("end-badge-name").innerText = badge;
+
+      // รหัส Certificate สำหรับครูนำไปตรวจสอบ
+      const reportKey = `WR-${btoa(playerName).slice(0, 6).toUpperCase()}-${score}PTS-${Date.now().toString().slice(-4)}`;
+      document.getElementById("report-code").innerText = `รหัสผลสอบ: ${reportKey}`;
+
+      sendToGoogleSheet(reportKey);
     }
 
-    function sendScoreToSheet() {
+    function sendToGoogleSheet(reportKey) {
       if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_SCRIPT")) {
-        document.getElementById("save-status").innerText = "ระบบจำลอง: บันทึกข้อมูลสำเร็จ (ยังไม่ได้เชื่อมต่อ Sheet URL)";
+        document.getElementById("sync-status").innerHTML = "📌 <b>แคปหน้าจอนี้ส่งคุณครูได้เลย</b> (ระบบจำลองรหัสบันทึกสมบูรณ์)";
         return;
       }
       fetch(SCRIPT_URL, {
@@ -312,14 +675,15 @@
           name: playerName,
           score: score,
           total: 20,
-          status: score >= 12 ? "ผ่านเกณฑ์" : "ควรปรับปรุง"
+          code: reportKey,
+          timestamp: new Date().toLocaleString("th-TH")
         })
       })
       .then(() => {
-        document.getElementById("save-status").innerText = "✅ บันทึกคะแนนเข้าสู่ระบบคุณครูเรียบร้อยแล้ว";
+        document.getElementById("sync-status").innerHTML = "✅ <b>คะแนนบันทึกเข้าสมุดพกของคุณครูเรียบร้อยแล้ว!</b>";
       })
       .catch(() => {
-        document.getElementById("save-status").innerText = "⚠️ ส่งคะแนนไม่สำเร็จ โปรดบันทึกภาพหน้าจอส่งคุณครู";
+        document.getElementById("sync-status").innerHTML = "⚠️ แคปภาพหน้าจอนี้เพื่อส่งยืนยันผลกับครูผู้สอน";
       });
     }
   </script>
