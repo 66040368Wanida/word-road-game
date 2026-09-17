@@ -3,17 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Word Road Grand Prix: 12 Checkpoints Adventure</title>
+  <title>Word Road GP: 3D Isometric Racing & Word Missions</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700;800;900&family=Chakra+Petch:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800;900&family=Chakra+Petch:wght@700;800&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #2563eb;
       --accent: #f59e0b;
       --success: #10b981;
       --danger: #ef4444;
-      --card-bg: rgba(17, 24, 39, 0.95);
     }
     * {
       box-sizing: border-box; margin: 0; padding: 0;
@@ -22,374 +21,509 @@
     }
     html, body {
       width: 100%; height: 100%; overflow: hidden;
-      background: #0f172a; touch-action: none;
+      background: #090d16; touch-action: none;
     }
 
     #gameCanvas {
       display: block; width: 100vw; height: 100vh;
-      background: #1e293b;
+      background: #15803d;
     }
 
-    /* Top HUD */
+    /* Modern Glass HUD */
     #hud {
-      position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
-      width: 95%; max-width: 1080px;
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      width: 94%; max-width: 960px;
       background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(14px);
-      border: 2px solid rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      padding: 10px 22px;
+      backdrop-filter: blur(16px);
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      border-radius: 22px;
+      padding: 10px 24px;
       display: flex; justify-content: space-between; align-items: center;
       color: #fff; z-index: 50;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.6);
     }
-    .hud-group { display: flex; align-items: center; gap: 10px; }
-    .hud-title { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; font-weight: 700; }
-    .hud-val { font-size: 1.15rem; font-weight: 800; color: #f8fafc; font-family: 'Chakra Petch', sans-serif; }
-    .badge-pill {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
+    .hud-col { display: flex; align-items: center; gap: 10px; }
+    .hud-tag { font-size: 0.8rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+    .hud-text { font-size: 1.15rem; font-weight: 800; color: #f8fafc; font-family: 'Chakra Petch', sans-serif; }
+    .pill {
       padding: 4px 14px; border-radius: 999px;
-      font-size: 0.95rem; font-weight: 800;
-      box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+      font-size: 0.95rem; font-weight: 800; font-family: 'Chakra Petch';
     }
-    .heart-svg { width: 22px; height: 22px; fill: #ef4444; filter: drop-shadow(0 0 6px #ef4444); }
+    .pill-stage { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+    .pill-score { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
 
-    /* Screens / Modals */
-    .screen-overlay {
+    /* Modals & Screens */
+    .overlay {
       position: fixed; inset: 0;
-      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.95) 0%, rgba(2, 6, 23, 0.98) 100%);
-      display: flex; justify-content: center; align-items: center; padding: 20px;
+      background: radial-gradient(circle at center, rgba(15, 23, 42, 0.92) 0%, rgba(2, 6, 23, 0.98) 100%);
+      display: flex; justify-content: center; align-items: center; padding: 18px;
       z-index: 100;
     }
-    .pro-modal {
-      background: var(--card-bg);
-      border: 2px solid #38bdf8;
+    .modal-box {
+      background: #0f172a;
+      border: 3px solid #38bdf8;
       border-radius: 28px;
-      padding: 32px 28px;
-      max-width: 500px; width: 100%;
+      padding: 30px;
+      max-width: 480px; width: 100%;
       text-align: center; color: #fff;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.2);
-      animation: modalZoom 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 35px rgba(56, 189, 248, 0.25);
+      animation: zoomIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    @keyframes modalZoom { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes zoomIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-    .header-logo {
-      display: flex; justify-content: center; align-items: center; gap: 12px; margin-bottom: 12px;
-    }
-    .game-h1 {
-      font-size: 2.1rem; font-weight: 900;
-      background: linear-gradient(135deg, #facc15, #f59e0b);
+    .game-logo {
+      font-size: 2.3rem; font-weight: 900;
+      background: linear-gradient(135deg, #facc15, #f97316);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      letter-spacing: 1px;
+      letter-spacing: 1px; margin-bottom: 8px;
     }
-    .desc-text { color: #cbd5e1; font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px; }
-
-    .ctrl-guide-card {
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px; padding: 14px; text-align: left;
-      font-size: 0.85rem; color: #93c5fd; margin-bottom: 20px; line-height: 1.6;
+    .input-pro {
+      width: 100%; padding: 15px 20px; border-radius: 16px;
+      border: 2px solid #3b82f6; background: #020617;
+      color: #fff; font-size: 1.1rem; outline: none;
+      text-align: center; margin: 18px 0; font-weight: 700;
     }
+    .input-pro:focus { border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.4); }
 
-    .custom-input {
-      width: 100%; padding: 14px 20px; border-radius: 14px;
-      border: 2px solid #3b82f6; background: #0b1120;
-      color: #fff; font-size: 1.05rem; outline: none;
-      text-align: center; margin-bottom: 16px; font-weight: 600;
-      transition: all 0.2s;
-    }
-    .custom-input:focus { border-color: #facc15; box-shadow: 0 0 15px rgba(250, 204, 21, 0.4); }
-
-    .btn-action {
-      width: 100%; padding: 15px; border-radius: 16px; border: none;
+    .btn-main {
+      width: 100%; padding: 16px; border-radius: 18px; border: none;
       background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-      color: #fff; font-size: 1.2rem; font-weight: 800; cursor: pointer;
-      box-shadow: 0 6px 0 #047857, 0 10px 20px rgba(0,0,0,0.4);
+      color: #fff; font-size: 1.25rem; font-weight: 900; cursor: pointer;
+      box-shadow: 0 6px 0 #047857, 0 12px 25px rgba(0,0,0,0.4);
       transition: 0.1s;
     }
-    .btn-action:active { transform: translateY(4px); box-shadow: 0 2px 0 #047857; }
+    .btn-main:active { transform: translateY(4px); box-shadow: 0 2px 0 #047857; }
 
-    /* Question & Mission Modal */
+    /* Checkpoint Event Modal (with Illustration Artwork) */
     #checkpoint-modal {
       position: fixed; inset: 0;
-      background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+      background: rgba(10, 15, 29, 0.88); backdrop-filter: blur(12px);
       display: none; justify-content: center; align-items: center;
       padding: 16px; z-index: 120;
     }
-    .checkpoint-card {
+    .event-card {
       background: #0f172a;
       border: 3px solid #facc15;
-      border-radius: 24px; padding: 26px; max-width: 550px; width: 100%;
-      color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+      border-radius: 26px; padding: 22px; max-width: 580px; width: 100%;
+      color: #fff; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+      max-height: 94vh; overflow-y: auto;
     }
-    .cp-header {
+    .event-visual-art {
+      width: 100%; height: 160px;
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border-radius: 18px; margin-bottom: 14px;
+      display: flex; justify-content: center; align-items: center;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      position: relative; overflow: hidden;
+    }
+    .event-title-banner {
       display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;
+      margin-bottom: 10px;
     }
-    .event-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #facc15; color: #0f172a;
+    .cp-pill {
+      background: #facc15; color: #020617;
       font-weight: 900; font-size: 0.85rem; padding: 4px 12px; border-radius: 8px;
     }
-    .event-story {
+    .story-desc {
       background: #1e293b; border-left: 4px solid #38bdf8;
-      padding: 12px 14px; border-radius: 8px; margin-bottom: 14px;
-      font-size: 0.95rem; color: #bae6fd; font-weight: 600;
+      padding: 10px 14px; border-radius: 8px; font-size: 0.95rem;
+      color: #bae6fd; font-weight: 600; margin-bottom: 14px; line-height: 1.5;
     }
-    .q-text { font-size: 1.15rem; font-weight: 700; margin-bottom: 16px; line-height: 1.5; }
-    .opts-grid { display: flex; flex-direction: column; gap: 10px; }
-    .opt-card {
+    .mission-q {
+      font-size: 1.15rem; font-weight: 800; margin-bottom: 15px; line-height: 1.5; color: #f8fafc;
+    }
+    .choice-group { display: flex; flex-direction: column; gap: 10px; }
+    .choice-btn {
       background: #1e293b; border: 2px solid #334155;
-      padding: 14px 18px; border-radius: 14px; color: #f1f5f9;
-      font-size: 1rem; font-weight: 600; cursor: pointer; text-align: left;
-      transition: all 0.15s ease; display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; border-radius: 14px; color: #f1f5f9;
+      font-size: 1.05rem; font-weight: 600; cursor: pointer; text-align: left;
+      display: flex; align-items: center; gap: 14px; transition: 0.15s;
     }
-    .opt-card:hover { background: #334155; border-color: #38bdf8; transform: translateX(6px); }
-    .opt-idx {
-      width: 28px; height: 28px; border-radius: 8px; background: #0f172a;
+    .choice-btn:hover { background: #334155; border-color: #38bdf8; transform: translateX(6px); }
+    .choice-key {
+      width: 32px; height: 32px; border-radius: 10px; background: #0b1120;
       display: flex; justify-content: center; align-items: center;
-      font-weight: 800; color: #facc15; border: 1px solid #475569;
+      font-weight: 900; color: #facc15; border: 1px solid #475569;
     }
 
-    /* Gamepad Touch Controls */
-    #touch-bar {
-      position: fixed; bottom: 20px; left: 0; right: 0;
-      display: flex; justify-content: space-between; padding: 0 35px;
+    /* Virtual Gamepad */
+    #controls {
+      position: fixed; bottom: 25px; left: 0; right: 0;
+      display: flex; justify-content: space-between; padding: 0 40px;
       pointer-events: none; z-index: 60;
     }
-    .touch-pad, .touch-pedals { pointer-events: auto; display: flex; gap: 14px; align-items: center; }
-    .touch-btn {
-      width: 66px; height: 66px; border-radius: 20px;
-      background: rgba(15, 23, 42, 0.75);
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(8px);
+    .ctrl-group { pointer-events: auto; display: flex; gap: 16px; align-items: center; }
+    .c-btn {
+      width: 72px; height: 72px; border-radius: 22px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
       display: flex; justify-content: center; align-items: center;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
       cursor: pointer; transition: transform 0.08s;
     }
-    .touch-btn:active { transform: scale(0.92); border-color: #facc15; background: rgba(250, 204, 21, 0.3); }
-    .touch-btn svg { width: 30px; height: 30px; fill: #ffffff; }
+    .c-btn:active { transform: scale(0.9); border-color: #facc15; background: rgba(250, 204, 21, 0.35); }
+    .c-btn svg { width: 34px; height: 34px; fill: #ffffff; }
   </style>
 </head>
 <body>
 
-  <!-- Screen 1: หน้าเริ่มเกมและคำแนะนำ -->
-  <div id="start-modal" class="screen-overlay">
-    <div class="pro-modal">
-      <div class="header-logo">
-        <svg viewBox="0 0 24 24" width="38" height="38" fill="#facc15"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
-        <h1 class="game-h1">WORD ROAD GP</h1>
-      </div>
-      <p class="desc-text">เส้นทางประลองทักษะ Microsoft Word 12 ด่าน พร้อมสถานการณ์จำลองและสิ่งกีดขวางบนท้องถนน ขับฝ่าอุปสรรคเพื่อรับใบขับขี่เกียรติยศ!</p>
+  <!-- Screen 1: Start Game -->
+  <div id="start-screen" class="overlay">
+    <div class="modal-box">
+      <div class="game-logo">🏎️ WORD ROAD 3D</div>
+      <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.6;">
+        สนามแข่งจำลองภารกิจ Microsoft Word 12 ด่าน พร้อมระบบขับขี่ฟิสิกส์เต็มรูปแบบและอุปสรรครายทาง
+      </p>
       
-      <div class="ctrl-guide-card">
-        🕹️ <b>การควบคุมรถ:</b><br>
-        • <b>คอมพิวเตอร์:</b> แป้นลูกศร <b>[ ⬆️ คันเร่ง ]</b> <b>[ ⬇️ ถอยหลัง/เบรก ]</b> <b>[ ⬅️ ➡️ บังคับพวงมาลัย ]</b><br>
-        • <b>แท็บเล็ต/มือถือ:</b> ใช้นิ้วสัมผัสแป้นทัชสกรีนซ้าย-ขวา และแป้นคันเร่งด้านล่าง<br>
-        ⚠️ <i>ระวังกรวยสะท้อนแสงและคราบน้ำมันบนถนน หากชนรถจะเสียหลัก!</i>
+      <div style="background: rgba(30, 41, 59, 0.6); border-radius: 14px; padding: 12px; font-size: 0.85rem; color: #38bdf8; margin: 16px 0; text-align: left; line-height: 1.6;">
+        🎮 <b>การบังคับ (ทุกอุปกรณ์):</b><br>
+        • คอมฯ: ปุ่มลูกศร <b>[ ⬆️ เร่งความเร็ว ]</b> <b>[ ⬇️ ถอยหลัง/เบรก ]</b> <b>[ ⬅️ ➡️ เลี้ยว ]</b><br>
+        • มือถือ/iPad: สัมผัสปุ่มพวงมาลัยซ้ายขวา และคันเร่งด้านล่างจอ
       </div>
 
-      <input type="text" id="player-input" class="custom-input" placeholder="ระบุชื่อ - นามสกุล หรือเลขที่นักเรียน..." />
-      <button class="btn-action" onclick="onStartGame()">สตาร์ทเครื่องยนต์ 🏁</button>
+      <input type="text" id="player-input" class="input-pro" placeholder="พิมพ์ชื่อ-นามสกุล หรือเลขที่..." />
+      <button class="btn-main" onclick="onStartGame()">เริ่มซิ่งสู่สนาม 🏁</button>
     </div>
   </div>
 
-  <!-- HUD Bar -->
+  <!-- Top Glass HUD -->
   <div id="hud">
-    <div class="hud-group">
+    <div class="hud-col">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="#38bdf8"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
       <div>
-        <div class="hud-title">นักขับมือทอง</div>
-        <div class="hud-val" id="hud-name">-</div>
+        <div class="hud-tag">นักขับมือหนึ่ง</div>
+        <div class="hud-text" id="hud-name">-</div>
       </div>
     </div>
 
-    <div class="hud-group">
-      <svg class="heart-svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-      <div class="hud-val" id="hud-hp">3</div>
+    <div class="hud-col">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="#ef4444"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      <div class="hud-text" id="hud-hp">3</div>
     </div>
 
-    <div class="hud-group">
+    <div class="hud-col">
       <div>
-        <div class="hud-title">สถานีปัจจุบัน</div>
-        <div class="badge-pill" id="hud-stage">ด่าน 1 / 12</div>
+        <div class="hud-tag">สถานีปัจจุบัน</div>
+        <div class="pill pill-stage" id="hud-stage">ด่าน 1 / 12</div>
       </div>
     </div>
 
-    <div class="hud-group">
+    <div class="hud-col">
       <div>
-        <div class="hud-title">คะแนนรวม</div>
-        <div class="badge-pill" id="hud-score" style="background: linear-gradient(135deg, #10b981, #059669);">0 / 20</div>
+        <div class="hud-tag">คะแนนสะสม</div>
+        <div class="pill pill-score" id="hud-score">0 / 20</div>
       </div>
     </div>
   </div>
 
-  <!-- Main Canvas Engine -->
+  <!-- Game Canvas -->
   <canvas id="gameCanvas"></canvas>
 
-  <!-- Touch Controls -->
-  <div id="touch-bar">
-    <div class="touch-pad">
-      <div class="touch-btn" id="ctrl-left">
+  <!-- Gamepad Touch -->
+  <div id="controls">
+    <div class="ctrl-group">
+      <div class="c-btn" id="btn-l">
         <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
       </div>
-      <div class="touch-btn" id="ctrl-right">
+      <div class="c-btn" id="btn-r">
         <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
       </div>
     </div>
-    <div class="touch-pedals">
-      <div class="touch-btn" id="ctrl-down" style="border-color: #ef4444; background: rgba(239,68,68,0.25);">
+    <div class="ctrl-group">
+      <div class="c-btn" id="btn-b" style="border-color: #ef4444; background: rgba(239,68,68,0.25);">
         <svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
       </div>
-      <div class="touch-btn" id="ctrl-up" style="border-color: #10b981; background: rgba(16,185,129,0.3); width: 74px; height: 74px;">
+      <div class="c-btn" id="btn-f" style="border-color: #10b981; background: rgba(16,185,129,0.35); width: 80px; height: 80px;">
         <svg viewBox="0 0 24 24"><path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z"/></svg>
       </div>
     </div>
   </div>
 
-  <!-- Checkpoint Gate Event Modal -->
+  <!-- Event Dialog Modal (With Artwork) -->
   <div id="checkpoint-modal">
-    <div class="checkpoint-card">
-      <div class="cp-header">
-        <span class="event-badge" id="event-badge">🚦 CHECKPOINT 1</span>
-        <span style="font-weight: 800; color: #facc15;" id="cp-pts">+1 คะแนน</span>
+    <div class="event-card">
+      <div class="event-title-banner">
+        <span class="cp-pill" id="ev-badge">🚦 CHECKPOINT 1</span>
+        <span style="font-weight: 800; color: #facc15;" id="ev-pts">+1 คะแนน</span>
       </div>
-      <div class="event-story" id="event-story-box">
-        🚧 ตำรวจจราจรกำลังตรวจความพร้อมก่อนเข้าตัวเมือง Word!
+
+      <!-- Artwork Scene Container -->
+      <div class="event-visual-art" id="ev-artwork"></div>
+
+      <div class="story-desc" id="ev-story">
+        เรื่องราวประจำด่าน
       </div>
-      <div class="q-text" id="cp-question">
+      <div class="mission-q" id="ev-q">
         คำถามประจำด่าน
       </div>
-      <div class="opts-grid" id="cp-options-box"></div>
+      <div class="choice-group" id="ev-choices"></div>
     </div>
   </div>
 
-  <!-- Screen 3: Finish & Certificate -->
-  <div id="finish-modal" class="screen-overlay" style="display: none;">
-    <div class="pro-modal">
-      <svg viewBox="0 0 24 24" width="60" height="60" fill="#facc15" style="margin-bottom: 10px;"><path d="M12 2l2.4 7.4h7.6l-6.1 4.5 2.3 7.1-6.2-4.6-6.2 4.6 2.3-7.1-6.1-4.5h7.6z"/></svg>
-      <h2 class="game-h1" style="font-size: 1.9rem; -webkit-text-fill-color: #4ade80;">FINISH LINE!</h2>
-      <p style="color: #cbd5e1; font-size: 0.95rem; margin-top: 5px;">คุณขับผ่านเส้นทาง Word Road ครบถ้วนทั้ง 12 สถานี</p>
+  <!-- Finish Modal -->
+  <div id="finish-screen" class="overlay" style="display: none;">
+    <div class="modal-box">
+      <div class="game-logo" style="-webkit-text-fill-color: #4ade80;">🏆 VICTORY LAP!</div>
+      <p style="color: #cbd5e1; font-size: 0.95rem;">คุณเดินทางฝ่าด่าน Word Road ครบ 12 ภารกิจเรียบร้อยแล้ว!</p>
 
-      <div style="background: #0b1120; border: 2px dashed #facc15; border-radius: 18px; padding: 18px; margin: 18px 0;">
-        <div style="font-size: 0.9rem; color: #94a3b8;">คะแนนรวมที่ทำได้</div>
-        <div id="final-score" style="font-size: 2.8rem; font-weight: 900; color: #facc15; font-family:'Chakra Petch';">0 / 20</div>
-        <div id="cert-rank" style="font-size: 1rem; font-weight: 700; color: #38bdf8;">ระดับ: มือโปรจัดการเอกสาร</div>
+      <div style="background: #020617; border: 2px dashed #facc15; border-radius: 18px; padding: 20px; margin: 18px 0;">
+        <div style="font-size: 0.85rem; color: #94a3b8;">คะแนนรวมทั้งสิ้น</div>
+        <div id="final-score-text" style="font-size: 2.8rem; font-weight: 900; color: #facc15; font-family:'Chakra Petch';">0 / 20</div>
+        <div id="final-rank-text" style="font-size: 1.05rem; font-weight: 800; color: #38bdf8;">ระดับ: นักขับเอกสารยอดเยี่ยม</div>
       </div>
 
-      <div id="token-card" style="background: rgba(30, 41, 59, 0.6); padding: 12px; border-radius: 10px; font-size: 0.8rem; color: #cbd5e1; word-break: break-all; margin-bottom: 16px;">
-        รหัสยืนยันผล: WR-GENERATING...
+      <div id="cert-box" style="background: rgba(30, 41, 59, 0.6); padding: 12px; border-radius: 12px; font-size: 0.8rem; color: #cbd5e1; word-break: break-all; margin-bottom: 16px;">
+        รหัสยืนยันผล: WR-CODE-READY
       </div>
 
-      <div id="sync-msg" style="font-size: 0.85rem; color: #38bdf8; margin-bottom: 15px;">
-        🔄 กำลังเชื่อมต่อสมุดคะแนน...
+      <div id="submit-status" style="font-size: 0.85rem; color: #38bdf8; margin-bottom: 15px;">
+        📸 ถ่ายภาพหน้าจอนี้ไว้เพื่อส่งยืนยันคะแนนกับครูผู้สอน
       </div>
 
-      <button class="btn-action" onclick="location.reload()">แข่งขันทบทวนอีกครั้ง 🔄</button>
+      <button class="btn-main" onclick="location.reload()">แข่งขันทบทวนใหม่ 🔄</button>
     </div>
   </div>
 
   <script>
-    // URL Web App สำหรับรับคะแนนเข้า Google Sheet (เปลี่ยนเป็น URL ของคุณครูได้เลย)
+    // URL สำหรับส่งคะแนนเข้า Google Sheet (เปลี่ยนเป็น Web App URL ของคุณครูได้เลย)
     const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
 
-    // 12 Checkpoint Story & Mission
-    const stages = [
+    // 12 Checkpoint Data พร้อมภาพ Vector Art
+    const missions = [
       {
-        id: 1, name: "รู้จัก Microsoft Word", pts: 1,
-        story: "🛑 ด่าน 1 Word City: รถกำลังเข้าสู่เมืองหลวง Word ตำรวจจราจรกำลังตรวจเช็กความรู้พื้นฐาน!",
-        q: "ตำรวจจราจรถามว่า: 'เครื่องมือใดใช้สำหรับทำให้ข้อความเป็นตัวหนา (Bold)?'",
-        opts: ["ปุ่มตัวไอคอน I", "ปุ่มตัวไอคอน B", "ปุ่มตัวไอคอน U", "ปุ่มใส่สีเน้นตัวหนังสือ"],
+        id: 1, title: "ด่าน 1 Word City: จุดตรวจความพร้อม", pts: 1,
+        story: "🚨 รถตำรวจทางหลวงเปิดไซเรนส่งสัญญาณ! ผู้หมวดกำลังเรียกตรวจความรู้เบื้องต้นก่อนเข้าสู่ตัวเมือง Word",
+        q: "ตำรวจจราจรถามว่า: 'เครื่องมือใดใช้สำหรับทำให้ตัวหนังสือกลายเป็นตัวหนา (Bold)?'",
+        opts: ["ไอคอนตัวอักษร I", "ไอคอนตัวอักษร B", "ไอคอนตัวอักษร U", "ไอคอนปากกาเน้นข้อความ"],
         ans: 1,
-        tip: "สังเกตสัญลักษณ์ B ย่อมาจากคำว่า Bold ครับ"
+        tip: "ไอคอน B ย่อมาจาก Bold หมายถึงตัวหนา",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#1e293b"/>
+          <rect y="110" width="300" height="40" fill="#334155"/>
+          <!-- Police Car -->
+          <rect x="30" y="80" width="80" height="30" rx="8" fill="#ffffff"/>
+          <rect x="40" y="65" width="50" height="18" rx="6" fill="#38bdf8"/>
+          <rect x="30" y="90" width="80" height="10" fill="#1e40af"/>
+          <circle cx="48" cy="110" r="8" fill="#0f172a"/><circle cx="92" cy="110" r="8" fill="#0f172a"/>
+          <!-- Siren -->
+          <circle cx="65" cy="62" r="5" fill="#ef4444"/>
+          <!-- Officer -->
+          <circle cx="180" cy="60" r="14" fill="#fed7aa"/>
+          <path d="M165 60 Q180 46 195 60" fill="#1e3a8a"/>
+          <rect x="168" y="74" width="24" height="45" rx="6" fill="#1e3a8a"/>
+          <rect x="175" y="80" width="10" height="6" fill="#facc15"/>
+          <path d="M192 82 L215 72" stroke="#fed7aa" stroke-width="6" stroke-linecap="round"/>
+          <!-- Dialogue Bubble -->
+          <path d="M210 30 h70 a10 10 0 0 1 10 10 v25 a10 10 0 0 1 -10 10 h-40 l-10 12 l-2 -12 h-18 a10 10 0 0 1 -10 -10 v-25 a10 10 0 0 1 10 -10 z" fill="#ffffff"/>
+          <text x="245" y="55" fill="#0f172a" font-size="12" font-weight="bold" text-anchor="middle">จอดตรวจ!</text>
+        </svg>`
       },
       {
-        id: 2, name: "สร้าง/บันทึกเอกสาร", pts: 1,
-        story: "🚧 ด่าน 2 Save Station: ไม้กั้นทางรถไฟปิดสนิท! ต้องทำการบันทึกเอกสารให้เรียบร้อยจึงจะเปิดทาง",
-        q: "นายสถานีถามว่า: 'แป้นพิมพ์ลัดคู่ใดใช้สำหรับบันทึกไฟล์ (Save) ทันที?'",
+        id: 2, title: "ด่าน 2 Save Station: สถานีรถไฟปิดทาง", pts: 1,
+        story: "🚧 ไม้กั้นทางรถไฟลงมาขวางถนน! นายสถานีแจ้งว่าต้องทำการบันทึกเอกสารให้เรียบร้อยก่อนจึงจะเปิดไม้กั้นให้ผ่าน",
+        q: "นายสถานีถามว่า: 'คีย์ลัดบนแป้นพิมพ์เพื่อบันทึกไฟล์ (Save) ทันทีคือข้อใด?'",
         opts: ["Ctrl + C", "Ctrl + V", "Ctrl + S", "Ctrl + P"],
         ans: 2,
-        tip: "ปุ่ม S ย่อมาจาก Save (บันทึก)"
+        tip: "ปุ่ม S ย่อมาจาก Save (บันทึก)",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#1e293b"/>
+          <!-- Railroad -->
+          <line x1="0" y1="120" x2="300" y2="120" stroke="#64748b" stroke-width="8"/>
+          <!-- Barrier Post -->
+          <rect x="70" y="50" width="16" height="70" fill="#475569"/>
+          <!-- Striped Barrier Pole -->
+          <line x1="80" y1="80" x2="260" y2="80" stroke="#ef4444" stroke-width="12" stroke-linecap="round" stroke-dasharray="25, 20"/>
+          <!-- Station Master -->
+          <circle cx="45" cy="75" r="12" fill="#fed7aa"/>
+          <rect x="36" y="87" width="18" height="35" rx="4" fill="#0284c7"/>
+          <rect x="36" y="70" width="18" height="6" fill="#dc2626"/>
+          <!-- Stop Sign Light -->
+          <circle cx="78" cy="42" r="10" fill="#ef4444"/>
+          <text x="180" y="55" fill="#facc15" font-size="16" font-weight="bold">🛑 ทางข้ามปิดอยู่</text>
+        </svg>`
       },
       {
-        id: 3, name: "พิมพ์และแก้ไขข้อความ", pts: 1,
-        story: "🛠️ ด่าน 3 Repair Station: รถเสียกะทันหันเพราะเอกสารมีข้อความผิด ต้องกู้คืนข้อความ!",
-        q: "ช่างซ่อมถามว่า: 'หากต้องการยกเลิกคำสั่งล่าสุดที่ทำพลาด (Undo) ต้องกดปุ่มใด?'",
-        opts: ["Ctrl + Z", "Ctrl + Y", "Ctrl + A", "Ctrl + X"],
+        id: 3, title: "ด่าน 3 Repair Station: รถเสียกะทันหัน", pts: 1,
+        story: "🛠️ รถเกิดควันขึ้นเพราะพิมพ์ข้อความพลาด! ช่างซ่อมต้องการใช้คำสั่งยกเลิกเพื่อคืนค่าเดิม",
+        q: "ช่างประจำอู่ถามว่า: 'หากต้องการยกเลิกคำสั่งที่เผลอทำผิด (Undo) ต้องกดคีย์ลัดใด?'",
+        opts: ["Ctrl + Z", "Ctrl + Y", "Ctrl + X", "Ctrl + D"],
         ans: 0,
-        tip: "Ctrl + Z เป็นปุ่มสากลสำหรับการ Undo ย้อนกลับ"
+        tip: "Ctrl + Z ใช้ยกเลิกคำสั่งล่าสุด (Undo)",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#1e293b"/>
+          <!-- Garage Lift -->
+          <rect x="100" y="95" width="100" height="8" fill="#e2e8f0"/>
+          <rect x="145" y="103" width="12" height="30" fill="#64748b"/>
+          <!-- Smoking Engine -->
+          <circle cx="120" cy="70" r="12" fill="#94a3b8" opacity="0.6"/>
+          <circle cx="115" cy="55" r="16" fill="#94a3b8" opacity="0.4"/>
+          <!-- Mechanic -->
+          <circle cx="210" cy="75" r="12" fill="#fed7aa"/>
+          <rect x="202" y="87" width="16" height="36" fill="#ea580c"/>
+          <!-- Wrench Tool -->
+          <path d="M195 85 L180 75" stroke="#94a3b8" stroke-width="5" stroke-linecap="round"/>
+          <text x="150" y="38" fill="#38bdf8" font-size="16" font-weight="bold" text-anchor="middle">🔧 REPAIR SHOP (UNDO)</text>
+        </svg>`
       },
       {
-        id: 4, name: "จัดรูปแบบตัวอักษร", pts: 1,
-        story: "🎨 ด่าน 4 Design Studio: เจ้าหน้าที่ศิลป์ต้องการให้คุณตกแต่งหัวข้อป้ายทะเบียนรถให้โดดเด่น",
-        q: "หากต้องการเปลี่ยนขนาดของแบบอักษร (Font Size) ต้องเลือกส่วนใดในแถบ Home?",
-        opts: ["Font Color", "Font Size (กล่องตัวเลขขนาด)", "Change Case", "Strikethrough"],
+        id: 4, title: "ด่าน 4 Design Studio: สตูดิโอปรับแต่ง", pts: 1,
+        story: "🎨 เจ้าหน้าที่ดีไซเนอร์ขอให้เปลี่ยนขนาดตัวอักษรหัวเรื่องของป้ายนำทางให้สะดุดตา",
+        q: "ต้องการเปลี่ยน 'ขนาดของตัวอักษร' ให้ใหญ่ขึ้น ต้องเลือกเครื่องมือใดในแถบ Home?",
+        opts: ["Font Size (ขนาดแบบอักษร)", "Font Color", "Strikethrough", "Text Highlight"],
+        ans: 0,
+        tip: "Font Size คือกล่องตัวเลขกำหนดขนาดตัวอักษร เช่น 16, 20, 24",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#1e293b"/>
+          <rect x="40" y="35" width="220" height="80" rx="14" fill="#0f172a" stroke="#a855f7" stroke-width="3"/>
+          <text x="70" y="85" fill="#f8fafc" font-size="34" font-weight="900">A</text>
+          <text x="110" y="85" fill="#a855f7" font-size="46" font-weight="900">A</text>
+          <text x="160" y="85" fill="#38bdf8" font-size="22" font-weight="bold">[ 24 pt ]</text>
+          <circle cx="225" cy="75" r="15" fill="#ec4899"/>
+        </svg>`
+      },
+      {
+        id: 5, title: "ด่าน 5 Alignment Bridge: สะพานขาดกึ่งกลาง", pts: 2,
+        story: "📐 สะพานข้ามแม่น้ำถูกตัดขาด! กลไกสะพานจะเลื่อนเข้ามาประกบพอดีเมื่อจัดวางกึ่งกลางถูกต้อง",
+        q: "ต้องการจัดข้อความหัวเรื่องรายงานให้อยู่ 'กึ่งกลางหน้ากระดาษ' ต้องเลือกคำสั่งใด?",
+        opts: ["Align Left (ชิดซ้าย)", "Center (กึ่งกลาง - Ctrl+E)", "Align Right (ชิดขวา)", "Justify (ชิดขอบ)"],
         ans: 1,
-        tip: "Font Size ใช้สำหรับกำหนดขนาดความใหญ่ของตัวอักษร"
+        tip: "Center มีคีย์ลัดคือ Ctrl + E เพื่อจัดให้อยู่ตรงกลาง",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#0284c7"/>
+          <!-- River Waves -->
+          <path d="M0 130 Q75 120 150 130 T300 130" stroke="#38bdf8" stroke-width="4" fill="none"/>
+          <!-- Broken Bridge Left & Right -->
+          <rect x="0" y="70" width="100" height="24" fill="#475569"/>
+          <rect x="200" y="70" width="100" height="24" fill="#475569"/>
+          <!-- Alignment Icon Floating -->
+          <circle cx="150" cy="65" r="22" fill="#facc15"/>
+          <rect x="138" y="55" width="24" height="4" rx="2" fill="#0f172a"/>
+          <rect x="142" y="63" width="16" height="4" rx="2" fill="#0f172a"/>
+          <rect x="136" y="71" width="28" height="4" rx="2" fill="#0f172a"/>
+        </svg>`
       },
       {
-        id: 5, name: "จัดย่อหน้า", pts: 2,
-        story: "📐 ด่าน 5 Alignment Bridge: รถมาถึงสะพานขาด สะพานจะเชื่อมต่อได้ก็ต่อเมื่อจัดตำแหน่งถูกต้อง!",
-        q: "ต้องการจัดหัวข้อเอกสารให้อยู่ 'กึ่งกลางหน้ากระดาษพอดี' ต้องเลือกปุ่มใด?",
-        opts: ["Align Left (Ctrl+L)", "Center (Ctrl+E)", "Align Right (Ctrl+R)", "Justify (Ctrl+J)"],
+        id: 6, title: "ด่าน 6 List Roundabout: วงเวียนเขาวงกต", pts: 1,
+        story: "🔄 รถมาถึงวงเวียนใหญ่ที่มีป้ายบอกทางแยกเป็นข้อๆ แบบสัญลักษณ์จุดนำหน้า",
+        q: "หากต้องการทำรายการสรุปหัวข้อย่อยแบบจุดกลม โดยไม่มีเลข 1 2 3 ต้องใช้เครื่องมือใด?",
+        opts: ["Numbering", "Bullets (สัญลักษณ์แสดงหัวข้อย่อย)", "Multilevel List", "Indent"],
         ans: 1,
-        tip: "Center มีคีย์ลัดคือ Ctrl + E เพื่อจัดกึ่งกลาง"
+        tip: "Bullets คือเครื่องหมายจุด วงกลม หรือสี่เหลี่ยมหน้าบรรทัด",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#1e293b"/>
+          <circle cx="150" cy="75" r="50" fill="#334155" stroke="#facc15" stroke-width="4"/>
+          <!-- Bullets List Sign in Center -->
+          <circle cx="130" cy="60" r="4" fill="#38bdf8"/><line x1="142" y1="60" x2="175" y2="60" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="130" cy="75" r="4" fill="#38bdf8"/><line x1="142" y1="75" x2="175" y2="75" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="130" cy="90" r="4" fill="#38bdf8"/><line x1="142" y1="90" x2="175" y2="90" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+        </svg>`
       },
       {
-        id: 6, name: "Bullets & Numbering", pts: 1,
-        story: "🔄 ด่าน 6 List Roundabout: วงเวียนเขาวงกต ต้องเลือกลิสต์หัวข้อย่อยเพื่อหาทางออก",
-        q: "หากต้องการทำรายการสรุปหัวข้อย่อยแบบจุดกลม โดยไม่มีตัวเลขกำกับ ต้องใช้คำสั่งใด?",
-        opts: ["Numbering", "Multilevel List", "Bullets", "Decrease Indent"],
+        id: 7, title: "ด่าน 7 Image Park: สวนภาพพฤกษศาสตร์", pts: 2,
+        story: "🖼️ ซุ้มประตูสวนพฤกษศาสตร์มีกรอบรูปภาพขนาดใหญ่ ต้องเลือกแท็บที่ถูกต้องเพื่อแทรกภาพ",
+        q: "เมนูหลักแท็บใดบน Ribbon ใช้สำหรับการนำเข้าไฟล์รูปภาพมาวางในเอกสาร?",
+        opts: ["Home (หน้าแรก)", "Insert (แทรก)", "Layout (เค้าโครง)", "Review (ตรวจทาน)"],
+        ans: 1,
+        tip: "การนำสิ่งใหม่ๆ เข้ามาใส่เอกสาร เช่น รูป ตาราง รูปทรง จะอยู่ในแท็บ Insert",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#15803d"/>
+          <!-- Picture Frame -->
+          <rect x="80" y="30" width="140" height="90" rx="8" fill="#f8fafc" stroke="#facc15" stroke-width="6"/>
+          <!-- Nature landscape inside image -->
+          <rect x="90" y="40" width="120" height="70" fill="#38bdf8"/>
+          <polygon points="90,110 130,70 160,95 210,55 210,110" fill="#16a34a"/>
+          <circle cx="120" cy="60" r="10" fill="#facc15"/>
+        </svg>`
+      },
+      {
+        id: 8, title: "ด่าน 8 Table Town: เมืองตารางหมากรุก", pts: 2,
+        story: "📊 ถนนในเมืองแบ่งเป็นตารางตาราง 4 ช่อง ต้องการยุบรวมสองช่องให้เป็นทางวิ่งเลนใหญ่",
+        q: "คำสั่งใดใช้สำหรับรวมเซลล์ในตาราง 2 ช่องเข้าด้วยกันให้เป็นช่องเดียว?",
+        opts: ["Split Cells", "Merge Cells", "Delete Row", "Distribute Columns"],
+        ans: 1,
+        tip: "Merge แปลว่า ผสาน หรือ รวมเซลล์เข้าด้วยกัน",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#1e293b"/>
+          <!-- Grid Table -->
+          <rect x="60" y="30" width="180" height="90" fill="#0f172a" stroke="#38bdf8" stroke-width="4"/>
+          <line x1="60" y1="75" x2="240" y2="75" stroke="#38bdf8" stroke-width="3"/>
+          <line x1="150" y1="30" x2="150" y2="75" stroke="#38bdf8" stroke-width="3"/>
+          <text x="150" y="105" fill="#10b981" font-size="18" font-weight="900" text-anchor="middle">MERGE CELLS ⚡</text>
+        </svg>`
+      },
+      {
+        id: 9, title: "ด่าน 9 Orientation Valley: หุบเขาช่องแคบ", pts: 2,
+        story: "🏞️ หุบเขามีหน้าผาขนาบข้าง ต้องเปลี่ยนการมองเห็นจากแนวตั้งเป็นแนวนอนเพื่อให้ผ่านได้!",
+        q: "การหมุนกระดาษจาก 'แนวตั้ง' ให้กลายเป็น 'แนวนอน' ต้องเข้าไปปรับที่เมนูใด?",
+        opts: ["Orientation ในแถบ Layout", "Margins", "Paper Size", "Text Wrapping"],
+        ans: 0,
+        tip: "Orientation (การวางแนว) ให้เลือก Landscape เพื่อเป็นแนวนอน",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#0f172a"/>
+          <!-- Mountains -->
+          <polygon points="0,150 60,40 130,150" fill="#334155"/>
+          <polygon points="170,150 240,30 300,150" fill="#334155"/>
+          <!-- Paper Rotation Sign -->
+          <rect x="120" y="60" width="60" height="40" rx="4" fill="#f8fafc" stroke="#facc15" stroke-width="3"/>
+          <path d="M130 50 A 25 25 0 0 1 170 50" stroke="#38bdf8" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+        </svg>`
+      },
+      {
+        id: 10, title: "ด่าน 10 Find & Replace Tunnel: อุโมงค์ค้นหา", pts: 2,
+        story: "🔦 ภายในอุโมงค์มืดมิด มีคำผิดซ่อนอยู่เต็มไปหมด ต้องใช้ไฟฉายส่องค้นหาและแทนที่คำ!",
+        q: "ปุ่มลัดสำหรับเรียกหน้าต่าง 'ค้นหาและแทนที่ข้อความ' (Find and Replace) คือปุ่มใด?",
+        opts: ["Ctrl + F", "Ctrl + H", "Ctrl + G", "Ctrl + Shift + F"],
+        ans: 1,
+        tip: "Ctrl + F ใช้ค้นหาคำ แต่ Ctrl + H ใช้ค้นหาแล้วแทนที่คำใหม่ทันที",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#050811"/>
+          <!-- Tunnel Arch -->
+          <path d="M50 150 Q150 10 250 150" fill="#1e293b" stroke="#facc15" stroke-width="6"/>
+          <!-- Flashlight Beam -->
+          <polygon points="150,75 80,145 220,145" fill="rgba(250, 204, 21, 0.25)"/>
+          <!-- Magnifier Glass -->
+          <circle cx="150" cy="75" r="18" fill="none" stroke="#38bdf8" stroke-width="4"/>
+          <line x1="163" y1="88" x2="180" y2="105" stroke="#38bdf8" stroke-width="6" stroke-linecap="round"/>
+          <text x="150" y="80" fill="#ffffff" font-size="12" font-weight="bold" text-anchor="middle">H</text>
+        </svg>`
+      },
+      {
+        id: 11, title: "ด่าน 11 Portal Gateway: ประตูมิติขึ้นหน้าใหม่", pts: 2,
+        story: "🌌 รถมาถึงจุดวาร์ปมิติ สำหรับตัดขึ้นหน้าใหม่ทันทีโดยไม่ต้องเคาะปุ่ม Enter หลายๆ ที",
+        q: "คำสั่งใดที่นักพิมพ์เอกสารมืออาชีพใช้สำหรับ 'ขึ้นหน้ากระดาษแผ่นใหม่ทันที'?",
+        opts: ["Line Break", "Page Break (ตัวแบ่งหน้า)", "Column Break", "Section Break Continuous"],
+        ans: 1,
+        tip: "Page Break หรือกด Ctrl + Enter เพื่อตัดขึ้นหน้าใหม่อย่างสวยงาม",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#1e1b4b"/>
+          <!-- Sci-fi Portal Ring -->
+          <ellipse cx="150" cy="75" rx="70" ry="55" fill="none" stroke="#a855f7" stroke-width="8"/>
+          <ellipse cx="150" cy="75" rx="55" ry="40" fill="none" stroke="#38bdf8" stroke-width="5"/>
+          <circle cx="150" cy="75" r="25" fill="#4f46e5"/>
+          <text x="150" y="82" fill="#ffffff" font-size="16" font-weight="900" text-anchor="middle">PAGE 2 ➔</text>
+        </svg>`
+      },
+      {
+        id: 12, title: "ด่าน 12 Grand Finale: ลานเกียรติยศจดหมายเวียน", pts: 3,
+        story: "🏆 ถึงเส้นชัยลานพิธีการใหญ่! กำลังพิมพ์ใบประกาศนียบัตรมอบให้ผู้ขับขี่ทุกคนด้วย Mail Merge",
+        q: "การดึงรายชื่อมาพิมพ์เกียรติบัตรหรือทำจดหมายเวียนส่งคนจำนวนมาก ต้องใช้แท็บคำสั่งใด?",
+        opts: ["References (การอ้างอิง)", "Review (ตรวจทาน)", "Mailings (การส่งจดหมาย)", "View (มุมมอง)"],
         ans: 2,
-        tip: "Bullets คือการใส่สัญลักษณ์จุดกลมหรือไอคอนนำหน้า"
-      },
-      {
-        id: 7, name: "แทรกรูปภาพ", pts: 2,
-        story: "🖼️ ด่าน 7 Image Park: เดินทางถึงสวนพฤกษศาสตร์ กล้องตรวจจับต้องการให้แทรกรูปวิวทิวทัศน์",
-        q: "เมนูหลักแท็บใดบน Ribbon ที่ต้องกดคลิกเพื่อเลือกนำไฟล์ภาพถ่ายเข้ามาวาง?",
-        opts: ["Home (หน้าแรก)", "Insert (แทรก)", "Layout (เค้าโครง)", "View (มุมมอง)"],
-        ans: 1,
-        tip: "อะไรที่เป็นการนำของใหม่เข้ามาเอกสาร จะอยู่ในแถบ Insert (แทรก)"
-      },
-      {
-        id: 8, name: "ตารางข้อมูล", pts: 2,
-        story: "📊 ด่าน 8 Table Town: ตารางหมากรุกขวางถนน ต้องแก้โจทย์ตารางเพื่อทะลวงผ่านไป",
-        q: "หากต้องการรวมช่องเซลล์ในตาราง 2 ช่องให้ยุบเป็นช่องเดียว ต้องคลิกคำสั่งใด?",
-        opts: ["Split Cells", "Merge Cells", "Distribute Rows", "Delete Column"],
-        ans: 1,
-        tip: "Merge Cells หมายถึงการผสานเซลล์เข้าด้วยกัน"
-      },
-      {
-        id: 9, name: "ตั้งค่าหน้ากระดาษ", pts: 2,
-        story: "🏞️ ด่าน 9 Orientation Valley: ทางผ่านหุบเขาแคบมาก ต้องปรับกระดาษเพื่อขยายมุมมอง!",
-        q: "ต้องการเปลี่ยนกระดาษจาก 'แนวตั้ง' ให้เป็น 'แนวนอน' ต้องเลือกคำสั่งใดในแถบ Layout?",
-        opts: ["Margins", "Size", "Orientation (การวางแนว)", "Columns"],
-        ans: 2,
-        tip: "Orientation มีให้เลือกสองแบบคือ Portrait (ตั้ง) และ Landscape (นอน)"
-      },
-      {
-        id: 10, name: "ตรวจสอบเอกสาร", pts: 2,
-        story: "🔦 ด่าน 10 Find Tunnel: อุโมงค์มืดทึบ มีคำผิดแอบซ่อนอยู่ ต้องส่องไฟค้นหาและแทนที่!",
-        q: "คีย์ลัดสำหรับเปิดฟังก์ชัน Find and Replace (ค้นหาและแทนที่คำทั่วทั้งฉบับ) คืออะไร?",
-        opts: ["Ctrl + F", "Ctrl + H", "Ctrl + G", "Ctrl + K"],
-        ans: 1,
-        tip: "Ctrl + F คือค้นหาอย่างเดียว แต่ Ctrl + H คือค้นหาและแทนที่คำใหม่"
-      },
-      {
-        id: 11, name: "จัดรูปแบบเอกสาร", pts: 2,
-        story: "🌌 ด่าน 11 Portal Gateway: ประตูมิติขึ้นหน้าใหม่โดยไม่ต้องเคาะ Enter ซ้ำๆ",
-        q: "การสั่งให้เอกสารตัดขึ้นแผ่นใหม่ทันทีแบบมืออาชีพ ควรใช้คำสั่งใด?",
-        opts: ["Line Break", "Page Break (ตัวแบ่งหน้า)", "Section Break", "Wrap Text"],
-        ans: 1,
-        tip: "Page Break (Ctrl + Enter) ช่วยขึ้นหน้าใหม่อย่างเป็นระเบียบ"
-      },
-      {
-        id: 12, name: "ภารกิจประยุกต์", pts: 3,
-        story: "🏁 ด่าน 12 Grand Finale: ลานพิธีการออกใบประกาศนียบัตรแบบจดหมายเวียนสู่เส้นชัย!",
-        q: "การดึงรายชื่อจากตารางมาพิมพ์ใบประกาศหรือทำจดหมายส่งคนนับร้อย ต้องใช้แท็บคำสั่งใด?",
-        opts: ["Review (ตรวจทาน)", "References (การอ้างอิง)", "Mailings (การส่งจดหมาย)", "View (มุมมอง)"],
-        ans: 2,
-        tip: "Mailings คือศูนย์รวมการทำ Mail Merge (จดหมายเวียน)"
+        tip: "Mailings คือคำสั่งสำหรับการทำ Mail Merge (จดหมายเวียน)",
+        art: `<svg viewBox="0 0 300 150" width="100%" height="100%">
+          <rect width="300" height="150" fill="#0f172a"/>
+          <!-- Confetti / Balloons -->
+          <circle cx="40" cy="30" r="10" fill="#ef4444"/><circle cx="260" cy="40" r="12" fill="#38bdf8"/>
+          <!-- Checkered Finish Banner -->
+          <rect x="50" y="20" width="200" height="24" fill="#ffffff"/>
+          <rect x="50" y="20" width="20" height="12" fill="#000000"/><rect x="90" y="20" width="20" height="12" fill="#000000"/><rect x="130" y="20" width="20" height="12" fill="#000000"/><rect x="170" y="20" width="20" height="12" fill="#000000"/><rect x="210" y="20" width="20" height="12" fill="#000000"/>
+          <rect x="70" y="32" width="20" height="12" fill="#000000"/><rect x="110" y="32" width="20" height="12" fill="#000000"/><rect x="150" y="32" width="20" height="12" fill="#000000"/><rect x="190" y="32" width="20" height="12" fill="#000000"/><rect x="230" y="32" width="20" height="12" fill="#000000"/>
+          <!-- Trophy -->
+          <path d="M135 65 h30 v25 a15 15 0 0 1 -30 0 z" fill="#facc15"/>
+          <rect x="145" y="90" width="10" height="15" fill="#facc15"/>
+          <rect x="130" y="105" width="40" height="10" rx="3" fill="#ca8a04"/>
+        </svg>`
       }
     ];
 
@@ -401,79 +535,109 @@
     let isModalOpen = false;
     let isGameOver = false;
 
-    // ระบบฟิสิกส์ยานพาหนะแบบ Real 2D Arcade
+    // ระบบฟิสิกส์ยานพาหนะแบบ Isometric Arcade Micro Machine
     let car = {
-      x: 0, y: 0,
-      angle: -Math.PI / 2,
+      x: 300, y: 350,
+      angle: 0,
       speed: 0,
-      maxSpeed: 4.5,
-      accel: 0.12,
-      friction: 0.04,
-      turnSpeed: 0.048,
+      maxSpeed: 7,
+      accel: 0.18,
+      friction: 0.05,
+      turnSpeed: 0.05,
       spinTimer: 0,
-      skidMarks: []
+      width: 48,
+      height: 76
     };
 
-    // ปุ่มควบคุม
     let keys = { up: false, down: false, left: false, right: false };
 
-    // จุด Checkpoints และ Obstacles
-    let checkpointNodes = [];
+    // กล้องเลื่อนตามรถ (Follow Camera)
+    let camera = { x: 0, y: 0 };
+
+    // จุด Checkpoints และ Obstacles ใน World Coordinate
+    let trackNodes = [];
     let obstacles = [];
+    let sceneryBuildings = [];
 
     function onStartGame() {
       const val = document.getElementById("player-input").value.trim();
-      if (!val) { alert("กรุณาพิมพ์ชื่อหรือเลขที่ก่อนเริ่มเล่นครับ"); return; }
+      if (!val) { alert("กรุณาพิมพ์ชื่อก่อนเข้าแข่งขันครับ!"); return; }
       playerName = val;
       document.getElementById("hud-name").innerText = playerName;
-      document.getElementById("start-modal").style.display = "none";
+      document.getElementById("start-screen").style.display = "none";
 
       canvas = document.getElementById("gameCanvas");
       ctx = canvas.getContext("2d");
-      window.addEventListener("resize", resizeGame);
-      resizeGame();
-      setupKeyListeners();
-      createRoadMap();
-      requestAnimationFrame(engineLoop);
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+      setupKeyEvents();
+      generateWorld();
+      requestAnimationFrame(gameLoop);
     }
 
-    function resizeGame() {
+    function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
 
-    function createRoadMap() {
-      checkpointNodes = [];
+    function generateWorld() {
+      trackNodes = [];
       obstacles = [];
-      const w = canvas.width;
-      const h = canvas.height;
+      sceneryBuildings = [];
 
-      // สร้างพิกัดถนนคดเคี้ยวรูปตัว S ไต่ระดับจากล่างขึ้นบน 12 ด่าน
-      for (let i = 0; i <= 12; i++) {
-        const t = i / 12;
-        const py = (h - 100) - t * (h - 200);
-        const px = (w * 0.5) + Math.sin(i * 1.35) * (w * 0.32);
-        checkpointNodes.push({ x: px, y: py, stage: i });
+      // สร้างถนนในโลกกว้าง (World Size 4000x3500)
+      const startX = 500;
+      const startY = 600;
+      
+      const route = [
+        { x: 500, y: 600 },
+        { x: 1200, y: 600 },
+        { x: 1800, y: 900 },
+        { x: 2200, y: 1400 },
+        { x: 1800, y: 2000 },
+        { x: 1100, y: 2000 },
+        { x: 600, y: 2300 },
+        { x: 700, y: 2900 },
+        { x: 1400, y: 3200 },
+        { x: 2200, y: 3100 },
+        { x: 2800, y: 2500 },
+        { x: 3000, y: 1700 },
+        { x: 2700, y: 800 }
+      ];
+
+      for (let i = 0; i < route.length; i++) {
+        trackNodes.push({ ...route[i], id: i });
       }
 
-      // วางตำแหน่งรถที่จุดสตาร์ต
-      car.x = checkpointNodes[0].x;
-      car.y = checkpointNodes[0].y;
+      car.x = trackNodes[0].x;
+      car.y = trackNodes[0].y;
+      car.angle = 0;
 
-      // วางอุปสรรค (กรวยจราจร และ คราบน้ำมัน) กระจายตามทาง
-      for (let i = 1; i <= 11; i++) {
-        const p1 = checkpointNodes[i - 1];
-        const p2 = checkpointNodes[i];
+      // วางกรวยจราจรและคราบน้ำมัน
+      for (let i = 0; i < route.length - 1; i++) {
+        const p1 = route[i];
+        const p2 = route[i + 1];
         obstacles.push({
-          x: (p1.x + p2.x) / 2 + (Math.random() - 0.5) * 50,
-          y: (p1.y + p2.y) / 2 + (Math.random() - 0.5) * 20,
-          type: i % 2 === 0 ? 'oil' : 'cone',
+          x: (p1.x + p2.x) / 2 + (Math.random() - 0.5) * 80,
+          y: (p1.y + p2.y) / 2 + (Math.random() - 0.5) * 80,
+          type: i % 2 === 0 ? 'cone' : 'oil',
           hit: false
+        });
+      }
+
+      // สร้างตึก 3D และต้นไม้รอบๆ สนาม
+      for (let i = 0; i < 35; i++) {
+        sceneryBuildings.push({
+          x: Math.random() * 3400 + 200,
+          y: Math.random() * 3400 + 200,
+          w: 90 + Math.random() * 80,
+          h: 90 + Math.random() * 70,
+          color: ['#3b82f6', '#8b5cf6', '#0284c7', '#059669', '#f59e0b'][i % 5]
         });
       }
     }
 
-    function setupKeyListeners() {
+    function setupKeyEvents() {
       window.addEventListener("keydown", e => {
         if (e.key === "ArrowUp" || e.key === "w") keys.up = true;
         if (e.key === "ArrowDown" || e.key === "s") keys.down = true;
@@ -487,278 +651,335 @@
         if (e.key === "ArrowRight" || e.key === "d") keys.right = false;
       });
 
-      const bind = (id, k) => {
+      const bind = (id, key) => {
         const el = document.getElementById(id);
-        el.addEventListener("touchstart", (e) => { e.preventDefault(); keys[k] = true; });
-        el.addEventListener("touchend", () => keys[k] = false);
+        el.addEventListener("touchstart", (e) => { e.preventDefault(); keys[key] = true; });
+        el.addEventListener("touchend", () => keys[key] = false);
       };
-      bind("ctrl-up", "up");
-      bind("ctrl-down", "down");
-      bind("ctrl-left", "left");
-      bind("ctrl-right", "right");
+      bind("btn-f", "up");
+      bind("btn-b", "down");
+      bind("btn-l", "left");
+      bind("btn-r", "right");
     }
 
-    function engineLoop() {
-      physicsUpdate();
-      graphicsRender();
-      if (!isGameOver) requestAnimationFrame(engineLoop);
+    function gameLoop() {
+      updatePhysics();
+      renderScene();
+      if (!isGameOver) requestAnimationFrame(gameLoop);
     }
 
-    function physicsUpdate() {
+    function updatePhysics() {
       if (isModalOpen) return;
 
-      // เมื่อรถโดนชนแล้วหมุน
+      // เมื่อรถหมุนติ้วจากการชนอุปสรรค
       if (car.spinTimer > 0) {
         car.spinTimer--;
         car.angle += 0.25;
-        car.speed *= 0.92;
+        car.speed *= 0.94;
         return;
       }
 
-      // ระบบขับเคลื่อน
+      // เดินหน้า - ถอยหลัง
       if (keys.up) car.speed += car.accel;
-      else if (keys.down) car.speed -= car.accel * 1.3;
+      else if (keys.down) car.speed -= car.accel * 1.2;
       else {
         if (car.speed > 0) car.speed = Math.max(0, car.speed - car.friction);
         if (car.speed < 0) car.speed = Math.min(0, car.speed + car.friction);
       }
-      car.speed = Math.max(-2, Math.min(car.speed, car.maxSpeed));
+      car.speed = Math.max(-2.5, Math.min(car.speed, car.maxSpeed));
 
-      // การเลี้ยวพวงมาลัย
+      // เลี้ยวพวงมาลัย
       if (car.speed !== 0) {
-        const dir = car.speed > 0 ? 1 : -1;
-        if (keys.left) car.angle -= car.turnSpeed * dir;
-        if (keys.right) car.angle += car.turnSpeed * dir;
+        const factor = car.speed > 0 ? 1 : -1;
+        if (keys.left) car.angle -= car.turnSpeed * factor;
+        if (keys.right) car.angle += car.turnSpeed * factor;
       }
 
       car.x += Math.cos(car.angle) * car.speed;
       car.y += Math.sin(car.angle) * car.speed;
 
-      // ขอบจอไม่ให้รถหลุด
-      car.x = Math.max(40, Math.min(canvas.width - 40, car.x));
-      car.y = Math.max(40, Math.min(canvas.height - 40, car.y));
+      // กล้องแพนตามรถอย่างนุ่มนวล (Smooth Follow Camera)
+      camera.x += (car.x - canvas.width / 2 - camera.x) * 0.1;
+      camera.y += (car.y - canvas.height / 2 - camera.y) * 0.1;
 
-      // เช็กการชนสิ่งกีดขวาง
+      // ตรวจจับชนกรวยหรือคราบน้ำมัน
       obstacles.forEach(ob => {
         if (!ob.hit) {
-          const dist = Math.hypot(car.x - ob.x, car.y - ob.y);
-          if (dist < 26) {
+          const d = Math.hypot(car.x - ob.x, car.y - ob.y);
+          if (d < 38) {
             ob.hit = true;
-            car.spinTimer = 30;
+            car.spinTimer = 35;
             lives = Math.max(0, lives - 1);
             document.getElementById("hud-hp").innerText = lives;
-            // สั่นจอ
-            canvas.style.transform = "translateX(8px)";
-            setTimeout(() => canvas.style.transform = "translateX(-8px)", 50);
-            setTimeout(() => canvas.style.transform = "none", 100);
           }
         }
       });
 
-      // เช็กการเข้าสู่ Checkpoint ประจำด่าน
+      // ตรวจจับเข้าสู่ Checkpoint
       if (currentStage < 12) {
-        const targetGate = checkpointNodes[currentStage + 1];
-        const distToGate = Math.hypot(car.x - targetGate.x, car.y - targetGate.y);
-        if (distToGate < 36) {
+        const gate = trackNodes[currentStage + 1];
+        const dist = Math.hypot(car.x - gate.x, car.y - gate.y);
+        if (dist < 80) {
           car.speed = 0;
           openCheckpointModal(currentStage);
         }
       }
     }
 
-    function openCheckpointModal(stageIdx) {
+    function openCheckpointModal(idx) {
       isModalOpen = true;
-      const data = stages[stageIdx];
-      document.getElementById("event-badge").innerText = `🚦 CHECKPOINT ${stageIdx + 1}`;
-      document.getElementById("cp-pts").innerText = `+${data.pts} แต้ม`;
-      document.getElementById("event-story-box").innerText = data.story;
-      document.getElementById("cp-question").innerText = data.q;
+      const m = missions[idx];
+      document.getElementById("ev-badge").innerText = `🚦 CHECKPOINT ${idx + 1}`;
+      document.getElementById("ev-pts").innerText = `+${m.pts} คะแนน`;
+      document.getElementById("ev-artwork").innerHTML = m.art;
+      document.getElementById("ev-story").innerText = m.story;
+      document.getElementById("ev-q").innerText = m.q;
 
-      const optsBox = document.getElementById("cp-options-box");
-      optsBox.innerHTML = "";
-      data.opts.forEach((txt, idx) => {
-        const card = document.createElement("div");
-        card.className = "opt-card";
-        card.innerHTML = `<div class="opt-idx">${['A','B','C','D'][idx]}</div> <div>${txt}</div>`;
-        card.onclick = () => submitAnswer(idx);
-        optsBox.appendChild(card);
+      const optsContainer = document.getElementById("ev-choices");
+      optsContainer.innerHTML = "";
+      m.opts.forEach((txt, optIdx) => {
+        const b = document.createElement("div");
+        b.className = "choice-btn";
+        b.innerHTML = `<div class="choice-key">${['A','B','C','D'][optIdx]}</div> <div>${txt}</div>`;
+        b.onclick = () => submitAnswer(optIdx);
+        optsContainer.appendChild(b);
       });
 
       document.getElementById("checkpoint-modal").style.display = "flex";
     }
 
-    function submitAnswer(chosenIdx) {
-      const data = stages[currentStage];
-      if (chosenIdx === data.ans) {
-        score += data.pts;
+    function submitAnswer(chosen) {
+      const m = missions[currentStage];
+      if (chosen === m.ans) {
+        score += m.pts;
         document.getElementById("checkpoint-modal").style.display = "none";
         currentStage++;
         document.getElementById("hud-stage").innerText = `ด่าน ${Math.min(currentStage + 1, 12)} / 12`;
         document.getElementById("hud-score").innerText = `${score} / 20`;
         isModalOpen = false;
 
-        // ขยับรถออกจากจุดตรวจเล็กน้อย
-        car.x += Math.cos(car.angle) * 30;
-        car.y += Math.sin(car.angle) * 30;
+        // ดันรถพ้นจุดตรวจเล็กน้อย
+        car.x += Math.cos(car.angle) * 70;
+        car.y += Math.sin(car.angle) * 70;
 
         if (currentStage >= 12) finishGame();
       } else {
-        // ระบบภารกิจแก้ตัว (Repair Mission) ไม่ให้รีเซ็ตเกม
-        alert(`❌ คำตอบยังไม่ถูกต้อง!\n💡 ข้อสังเกตช่วยเหลือ: ${data.tip}\nกรุณาเลือกใหม่อีกครั้งเพื่อเปิดประตู`);
+        // ภารกิจซ่อมแซมแก้ตัว ไม่ปรับตก
+        alert(`❌ ยังไม่ถูกต้องครับ!\n💡 คำใบ้ช่วยเหลือ: ${m.tip}\nโปรดลองเลือกใหม่อีกครั้งเพื่อเปิดด่าน`);
       }
     }
 
-    function graphicsRender() {
-      // 1. พื้นหญ้าไล่เฉดเขียวสดใส สไตล์มาริโอ้
-      const grassGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      grassGrad.addColorStop(0, "#4ade80");
-      grassGrad.addColorStop(1, "#22c55e");
-      ctx.fillStyle = grassGrad;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    function renderScene() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 2. ขอบทางถนน (Checkered Red-White Kerb)
+      ctx.save();
+      // เลื่อนกล้องตามตำแหน่งรถ
+      ctx.translate(-camera.x, -camera.y);
+
+      // 1. ทุ่งหญ้าและตารางตารางกราวด์ 3D
+      ctx.fillStyle = "#15803d";
+      ctx.fillRect(camera.x - 200, camera.y - 200, canvas.width + 400, canvas.height + 400);
+
+      // Grid สไตล์เกม Sandbox
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      ctx.lineWidth = 2;
+      const startGripX = Math.floor((camera.x - 200) / 100) * 100;
+      const startGripY = Math.floor((camera.y - 200) / 100) * 100;
+      for (let x = startGripX; x < camera.x + canvas.width + 200; x += 100) {
+        ctx.beginPath(); ctx.moveTo(x, camera.y - 200); ctx.lineTo(x, camera.y + canvas.height + 200); ctx.stroke();
+      }
+      for (let y = startGripY; y < camera.y + canvas.height + 200; y += 100) {
+        ctx.beginPath(); ctx.moveTo(camera.x - 200, y); ctx.lineTo(camera.x + canvas.width + 200, y); ctx.stroke();
+      }
+
+      // 2. ตึก 3D บล็อกประกอบฉาก
+      sceneryBuildings.forEach(b => {
+        // เงาตึก
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fillRect(b.x + 15, b.y + 15, b.w, b.h);
+        // ตัวตึกข้าง
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(b.x, b.y + 15, b.w, b.h);
+        // หลังคาตึก 3D
+        ctx.fillStyle = b.color;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+      });
+
+      // 3. เส้นทางถนนหลัก (Super Highway)
+      // ขอบทาง Curb หมากรุกแดงขาว
       ctx.beginPath();
-      ctx.lineWidth = 110;
-      ctx.strokeStyle = "#ef4444";
+      ctx.lineWidth = 190;
+      ctx.strokeStyle = "#dc2626";
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      checkpointNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      trackNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
       ctx.stroke();
 
       ctx.beginPath();
-      ctx.lineWidth = 98;
+      ctx.lineWidth = 175;
       ctx.strokeStyle = "#ffffff";
-      checkpointNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      trackNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
       ctx.stroke();
 
-      // 3. ผิวถนนลาดยางมะตอยเข้มพรีเมียม
+      // ผิวถนนลาดยางมะตอย
       ctx.beginPath();
-      ctx.lineWidth = 82;
+      ctx.lineWidth = 155;
       ctx.strokeStyle = "#1e293b";
-      checkpointNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      trackNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
       ctx.stroke();
 
       // เส้นประสีเหลืองนีออนกลางถนน
       ctx.beginPath();
-      ctx.lineWidth = 4;
-      ctx.setLineDash([18, 18]);
+      ctx.lineWidth = 6;
+      ctx.setLineDash([30, 25]);
       ctx.strokeStyle = "#facc15";
-      checkpointNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+      trackNodes.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // 4. วาดซุ้มประตู Checkpoint แต่ละด่าน
-      checkpointNodes.slice(1).forEach((p, idx) => {
+      // 4. วาด Checkpoints ซุ้มประตู
+      trackNodes.slice(1).forEach((p, idx) => {
         const isPassed = idx < currentStage;
-        const isCurrent = idx === currentStage;
+        const isCur = idx === currentStage;
 
-        // วงรัศมีเรืองแสงสำหรับด่านปัจจุบัน
-        if (isCurrent) {
+        // วงเรืองแสง
+        if (isCur) {
           ctx.beginPath();
-          ctx.arc(p.x, p.y, 32, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(250, 204, 21, 0.35)";
+          ctx.arc(p.x, p.y, 65, 0, Math.PI * 2);
+          ctx.fillStyle = "rgba(250, 204, 21, 0.3)";
           ctx.fill();
         }
 
+        // เสาประตูสองข้าง
+        ctx.fillStyle = "#334155";
+        ctx.fillRect(p.x - 75, p.y - 15, 20, 30);
+        ctx.fillRect(p.x + 55, p.y - 15, 20, 30);
+
+        // ป้าย Checkpoint กลมตรงกลาง
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
-        ctx.fillStyle = isPassed ? "#10b981" : (isCurrent ? "#facc15" : "#64748b");
+        ctx.arc(p.x, p.y, 42, 0, Math.PI * 2);
+        ctx.fillStyle = isPassed ? "#10b981" : (isCur ? "#facc15" : "#475569");
         ctx.fill();
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 6;
         ctx.strokeStyle = "#ffffff";
         ctx.stroke();
 
-        ctx.fillStyle = isCurrent ? "#0f172a" : "#ffffff";
-        ctx.font = "900 13px 'Kanit'";
+        ctx.fillStyle = isCur ? "#020617" : "#ffffff";
+        ctx.font = "900 24px 'Kanit'";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(idx + 1, p.x, p.y);
       });
 
-      // 5. วาดอุปสรรคบนถนน
+      // 5. วาดอุปสรรค (กรวย 3D และ คราบน้ำมัน)
       obstacles.forEach(ob => {
         if (ob.hit) return;
         if (ob.type === 'cone') {
-          // กรวยสะท้อนแสง 3D
+          // กรวยสะท้อนแสงทรงกรวย 3D
           ctx.fillStyle = "#ea580c";
           ctx.beginPath();
-          ctx.moveTo(ob.x, ob.y - 15);
-          ctx.lineTo(ob.x + 10, ob.y + 8);
-          ctx.lineTo(ob.x - 10, ob.y + 8);
+          ctx.moveTo(ob.x, ob.y - 25);
+          ctx.lineTo(ob.x + 16, ob.y + 14);
+          ctx.lineTo(ob.x - 16, ob.y + 14);
           ctx.closePath();
           ctx.fill();
           ctx.fillStyle = "#ffffff";
-          ctx.fillRect(ob.x - 6, ob.y - 5, 12, 4);
+          ctx.fillRect(ob.x - 10, ob.y - 8, 20, 6);
         } else {
-          // คราบน้ำมันดิบ
-          ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+          // บ่อน้ำมันลื่น
+          ctx.fillStyle = "#020617";
           ctx.beginPath();
-          ctx.ellipse(ob.x, ob.y, 14, 8, 0, 0, Math.PI * 2);
+          ctx.ellipse(ob.x, ob.y, 25, 15, 0, 0, Math.PI * 2);
           ctx.fill();
         }
       });
 
-      // 6. วาดโมเดลรถสปอร์ตโพลีกอน (Arcade Sports Car)
+      // 6. วาดโมเดลรถใหญ่ 3D Blocky Racing Car (สไตล์ Micro Machine / Roblox)
       ctx.save();
       ctx.translate(car.x, car.y);
-      ctx.rotate(car.angle + Math.PI / 2);
+      ctx.rotate(car.angle);
 
-      // เงารถ
-      ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+      // แสงไฟหน้ารถคู่ส่องสว่างบนพื้นถนน (Headlight Beams)
+      ctx.fillStyle = "rgba(254, 240, 138, 0.28)";
       ctx.beginPath();
-      ctx.roundRect(-14, -18, 28, 42, 8);
+      ctx.moveTo(35, -16);
+      ctx.lineTo(160, -65);
+      ctx.lineTo(160, 65);
+      ctx.lineTo(35, 16);
+      ctx.closePath();
       ctx.fill();
 
-      // ล้อรถยางดำ
+      // เงารถตกกระทบพื้น
+      ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+      ctx.beginPath();
+      ctx.roundRect(-42, -28, 86, 56, 14);
+      ctx.fill();
+
+      // ล้อรถยางบิ๊กฟุต 4 เส้น
       ctx.fillStyle = "#0f172a";
-      ctx.fillRect(-16, -14, 5, 10);
-      ctx.fillRect(11, -14, 5, 10);
-      ctx.fillRect(-16, 6, 5, 10);
-      ctx.fillRect(11, 6, 5, 10);
+      ctx.fillRect(-35, -34, 22, 12);
+      ctx.fillRect(15, -34, 22, 12);
+      ctx.fillRect(-35, 22, 22, 12);
+      ctx.fillRect(15, 22, 22, 12);
 
-      // ตัวถังรถสีแดงสปอร์ต
-      const carGrad = ctx.createLinearGradient(-12, 0, 12, 0);
-      carGrad.addColorStop(0, "#ef4444");
-      carGrad.addColorStop(1, "#b91c1c");
-      ctx.fillStyle = carGrad;
+      // โครงตัวถังล่าง (Chassis)
+      ctx.fillStyle = "#991b1b";
       ctx.beginPath();
-      ctx.roundRect(-12, -16, 24, 36, 6);
+      ctx.roundRect(-38, -25, 76, 50, 12);
       ctx.fill();
 
-      // กระจกหน้ารถสะท้อนแสงฟ้า
+      // ตัวถังรถสปอร์ตสีแดงสด (Main Body 3D)
+      ctx.fillStyle = "#ef4444";
+      ctx.beginPath();
+      ctx.roundRect(-34, -22, 70, 44, 10);
+      ctx.fill();
+
+      // ห้องโดยสารกระจกหน้ารถสีฟ้านีออน (Cockpit)
       ctx.fillStyle = "#38bdf8";
       ctx.beginPath();
-      ctx.roundRect(-8, -8, 16, 10, 3);
+      ctx.roundRect(-10, -16, 28, 32, 6);
       ctx.fill();
 
-      // ไฟหน้าคู่สีเหลืองสว่าง
-      ctx.fillStyle = "#fef08a";
-      ctx.fillRect(-10, -16, 4, 3);
-      ctx.fillRect(6, -16, 4, 3);
+      // หลังคาด้านบน (Roof)
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.roundRect(-16, -12, 18, 24, 4);
+      ctx.fill();
+
+      // สปอยเลอร์หลังเท่ๆ (Rear Wing)
+      ctx.fillStyle = "#1e293b";
+      ctx.fillRect(-38, -24, 8, 48);
+
+      // ไฟท้ายคู่สีแดง
+      ctx.fillStyle = "#f87171";
+      ctx.fillRect(-35, -18, 4, 8);
+      ctx.fillRect(-35, 10, 4, 8);
 
       ctx.restore();
+
+      ctx.restore(); // สิ้นสุดการทำงานของ Camera
     }
 
     function finishGame() {
       isGameOver = true;
-      document.getElementById("finish-modal").style.display = "flex";
-      document.getElementById("final-score").innerText = `${score} / 20`;
+      document.getElementById("finish-screen").style.display = "flex";
+      document.getElementById("final-score-text").innerText = `${score} / 20`;
 
-      let rank = "🔰 ผู้ขับขี่ฝึกหัด (ควรทบทวนเพิ่มเติม)";
-      if (score >= 18) rank = "👑 ยอดนักขับระดับ Master (เก่งมาก)";
-      else if (score >= 14) rank = "🏆 นักขับเชี่ยวชาญ Microsoft Word";
+      let rank = "🔰 ผู้ขับขี่ฝึกหัด (ควรทบทวนเนื้อหาเพิ่มเติม)";
+      if (score >= 18) rank = "👑 Grand Master of Microsoft Word";
+      else if (score >= 14) rank = "🏆 ผู้ขับขี่เชี่ยวชาญระดับสูง";
       else if (score >= 10) rank = "⭐ นักขับผ่านเกณฑ์มาตรฐาน";
-      document.getElementById("cert-rank").innerText = rank;
+      document.getElementById("final-rank-text").innerText = rank;
 
-      const certCode = `WR-${btoa(playerName).slice(0, 5).toUpperCase()}-${score}PTS-${Date.now().toString().slice(-4)}`;
-      document.getElementById("token-card").innerText = `รหัสรับรองผล: ${certCode}`;
+      const certId = `WR-${btoa(playerName).slice(0, 5).toUpperCase()}-${score}PTS-${Date.now().toString().slice(-4)}`;
+      document.getElementById("cert-box").innerText = `รหัสเกียรติบัตร: ${certId}`;
 
-      sendToSheet(certCode);
+      sendScore(certId);
     }
 
-    function sendToSheet(certCode) {
+    function sendScore(code) {
       if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_SCRIPT")) {
-        document.getElementById("sync-msg").innerHTML = "📸 <b>ถ่ายภาพหน้าจอนี้ส่งคุณครูได้เลย</b> (รหัสตรวจสอบพร้อม)";
+        document.getElementById("submit-status").innerHTML = "📸 <b>ถ่ายภาพหน้าจอนี้ส่งคุณครูได้เลย</b> (รหัสผลสอบพร้อมตรวจสอบ)";
         return;
       }
       fetch(SCRIPT_URL, {
@@ -769,15 +990,15 @@
           name: playerName,
           score: score,
           total: 20,
-          code: certCode,
+          code: code,
           time: new Date().toLocaleString("th-TH")
         })
       })
       .then(() => {
-        document.getElementById("sync-msg").innerHTML = "✅ <b>บันทึกคะแนนส่งคุณครูเรียบร้อยแล้ว</b>";
+        document.getElementById("submit-status").innerHTML = "✅ <b>คะแนนถูกส่งเข้าบัญชีคุณครูเรียบร้อยแล้ว</b>";
       })
       .catch(() => {
-        document.getElementById("sync-msg").innerHTML = "📸 แคปภาพหน้าจอนี้ไว้ส่งคุณครูเพื่อยืนยันคะแนน";
+        document.getElementById("submit-status").innerHTML = "📸 แคปหน้าจอนี้ไว้ส่งคุณครูเพื่อยืนยันคะแนน";
       });
     }
   </script>
