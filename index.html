@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Word Road Mission - นักขับมือใหม่ Microsoft Word</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif, system-ui; }
+    body { background: #1a1a2e; color: #fff; overflow-x: hidden; touch-action: manipulation; }
+    
+    /* Overlay Screens */
+    .screen { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; background: rgba(15, 23, 42, 0.95); z-index: 100; }
+    .card { background: #222943; padding: 25px; border-radius: 20px; max-width: 450px; width: 100%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 2px solid #3b82f6; text-align: center; }
+    .card h1 { color: #60a5fa; font-size: 1.8rem; margin-bottom: 12px; }
+    .card p { font-size: 0.95rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 15px; }
+    .input-box { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 1rem; margin-bottom: 15px; }
+    .btn { background: #2563eb; color: #fff; border: none; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 1rem; width: 100%; }
+    .btn:active { transform: scale(0.98); background: #1d4ed8; }
+
+    /* HUD */
+    #hud { position: fixed; top: 0; left: 0; right: 0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 50; }
+    .hud-item { font-size: 1rem; font-weight: bold; color: #93c5fd; }
+
+    /* Canvas Map */
+    #gameCanvas { display: block; margin: 0 auto; background: #111827; }
+
+    /* Modal Question */
+    #quiz-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; padding: 15px; z-index: 150; }
+    .quiz-card { background: #1e293b; padding: 25px; border-radius: 16px; width: 100%; max-width: 500px; border: 2px solid #eab308; }
+    .quiz-tag { display: inline-block; background: #eab308; color: #000; font-weight: bold; font-size: 0.8rem; padding: 4px 8px; border-radius: 5px; margin-bottom: 10px; }
+    .quiz-q { font-size: 1.1rem; margin-bottom: 15px; }
+    .quiz-opt { display: flex; flex-direction: column; gap: 10px; }
+    .opt-btn { background: #334155; border: 1px solid #475569; padding: 12px; color: #fff; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.95rem; }
+    .opt-btn:hover { background: #475569; }
+
+    /* Mobile Controls */
+    #touch-controls { position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center; gap: 25px; z-index: 50; }
+    .ctrl-btn { width: 75px; height: 75px; border-radius: 50%; background: rgba(37, 99, 235, 0.85); border: 2px solid #60a5fa; color: white; font-size: 1.8rem; display: flex; justify-content: center; align-items: center; user-select: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Screen 1: เข้าสู่เกม -->
+  <div id="start-screen" class="screen">
+    <div class="card">
+      <h1>🚗 Word Road</h1>
+      <p>ยินดีต้อนรับสู่สนามทดสอบทักษะ Microsoft Word 12 ด่าน ขับรถตามเส้นทางเพื่อฝ่าด่านภารกิจให้ครบ</p>
+      <div style="background: #0f172a; border-radius: 8px; padding: 10px; margin-bottom: 15px; text-align: left; font-size: 0.85rem; color: #94a3b8;">
+        🕹️ <b>การบังคับ:</b><br>
+        - คอมพิวเตอร์: กดปุ่มลูกศร <b>⬆️ ขับหน้า</b> / <b>⬇️ ถอยหลัง</b><br>
+        - มือถือ / แท็บเล็ต: กดปุ่มสัมผัสลูกศรด้านล่างหน้าจอ
+      </div>
+      <input type="text" id="player-name" class="input-box" placeholder="กรอกชื่อ-นามสกุล / ชั้นเลขที่..." />
+      <button class="btn" onclick="startGame()">เริ่มขับรถเลย 🏁</button>
+    </div>
+  </div>
+
+  <!-- HUD Status -->
+  <div id="hud">
+    <div class="hud-item" id="hud-name">👤 ผู้เล่น: -</div>
+    <div class="hud-item" id="hud-stage">ด่าน: 1/12</div>
+    <div class="hud-item" id="hud-score">คะแนน: 0/20</div>
+  </div>
+
+  <!-- Canvas Scene -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Touch Buttons -->
+  <div id="touch-controls">
+    <div class="ctrl-btn" id="btn-back">⬇️</div>
+    <div class="ctrl-btn" id="btn-forward">⬆️</div>
+  </div>
+
+  <!-- Modal Question -->
+  <div id="quiz-modal">
+    <div class="quiz-card">
+      <div class="quiz-tag" id="q-tag">Checkpoint</div>
+      <h3 class="quiz-q" id="q-title">คำถามประจำด่าน</h3>
+      <div class="quiz-opt" id="q-options"></div>
+    </div>
+  </div>
+
+  <!-- Screen 3: จบภารกิจ -->
+  <div id="end-screen" class="screen" style="display: none;">
+    <div class="card">
+      <h1>🏆 จบภารกิจ!</h1>
+      <p id="end-msg">คุณผ่านเส้นทาง Word Road ครบทุกด่านแล้ว</p>
+      <h2 id="final-score" style="color: #4ade80; margin: 15px 0;">0 / 20 คะแนน</h2>
+      <p id="save-status" style="font-size: 0.85rem; color: #cbd5e1;">กำลังบันทึกคะแนนเข้าสู่ระบบคุณครู...</p>
+    </div>
+  </div>
+
+  <script>
+    // ** ใส่ Web App URL ของ Google Apps Script ตรงนี้ **
+    const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
+
+    const questions = [
+      { id: 1, title: "ด่าน 1: รู้จัก Microsoft Word", q: "ชนิดไฟล์เอกสารมาตรฐานของ Microsoft Word ยุคปัจจุบันคือนามสกุลใด", pts: 1, opt: ["A. .xlsx", "B. .docx", "C. .pptx", "D. .txt"], ans: 1 },
+      { id: 2, title: "ด่าน 2: สร้าง/บันทึกเอกสาร", q: "แป้นพิมพ์ลัดใดใช้สำหรับ “บันทึกเอกสาร (Save)” ทันที", pts: 1, opt: ["A. Ctrl + C", "B. Ctrl + S", "C. Ctrl + P", "D. Ctrl + Z"], ans: 1 },
+      { id: 3, title: "ด่าน 3: พิมพ์และแก้ไขข้อความ", q: "หากต้องการยกเลิกคำสั่งหรือกู้ข้อความที่ลบทิ้ง (Undo) ต้องใช้คำสั่งใด", pts: 1, opt: ["A. Ctrl + Z", "B. Ctrl + Y", "C. Ctrl + X", "D. Ctrl + V"], ans: 0 },
+      { id: 4, title: "ด่าน 4: จัดรูปแบบตัวอักษร", q: "สัญลักษณ์ตัวไอคอน 'B' ในแถบเครื่องมือมีหน้าที่ทำอะไร", pts: 1, opt: ["A. เอียงข้อความ", "B. ขีดเส้นใต้", "C. ทำให้ข้อความหนา", "D. ใส่สีไฮไลต์"], ans: 2 },
+      { id: 5, title: "ด่าน 5: จัดย่อหน้า", q: "หากต้องการจัดหัวข้อให้อยู่ 'ตรงกลางหน้ากระดาษ' ต้องเลือกคำสั่งใด", pts: 2, opt: ["A. Align Left", "B. Center (Ctrl+E)", "C. Align Right", "D. Justify"], ans: 1 },
+      { id: 6, title: "ด่าน 6: Bullets & Numbering", q: "เมื่อต้องการใส่จุดสัญลักษณ์แสดงหัวข้อย่อยแบบไม่มีลำดับเลข ต้องใช้ฟังก์ชันใด", pts: 1, opt: ["A. Numbering", "B. Multilevel", "C. Bullets", "D. Indent"], ans: 2 },
+      { id: 7, title: "ด่าน 7: แทรกรูปภาพ", q: "เมนูหลักแถบใดที่ใช้สำหรับการนำภาพภายนอกเข้ามาใส่ในเอกสาร", pts: 2, opt: ["A. หน้าแรก (Home)", "B. แทรก (Insert)", "C. เค้าโครง (Layout)", "D. ออกแบบ (Design)"], ans: 1 },
+      { id: 8, title: "ด่าน 8: ตาราง (Table)", q: "หากต้องการรวมช่องตาราง 2 ช่องเข้าด้วยกันให้เป็นเซลล์เดียว ใช้คำสั่งใด", pts: 2, opt: ["A. Split Cells", "B. Delete Cells", "C. Merge Cells", "D. AutoFit"], ans: 2 },
+      { id: 9, title: "ด่าน 9: ตั้งค่าหน้ากระดาษ", q: "การเปลี่ยนเอกสารจากกระดาษแนวตั้งให้เป็นแนวนอน เข้าไปที่คำสั่งใด", pts: 2, opt: ["A. Orientation ใน Layout", "B. Margins", "C. Size", "D. Columns"], ans: 0 },
+      { id: 10, title: "ด่าน 10: ตรวจสอบเอกสาร", q: "เครื่องมือ Find & Replace สำหรับค้นหาคำผิดแล้วแทนที่ด้วยคำใหม่ ใช้คีย์ลัดใด", pts: 2, opt: ["A. Ctrl + F", "B. Ctrl + H", "C. Ctrl + K", "D. Ctrl + G"], ans: 1 },
+      { id: 11, title: "ด่าน 11: จัดรูปแบบเอกสาร", q: "ต้องการเว้นหน้ากระดาษขึ้นแผ่นใหม่ทันทีโดยไม่เคาะ Enter ซ้ำๆ ควรใส่สิ่งใด", pts: 2, opt: ["A. Line Break", "B. Page Break", "C. Section Break", "D. Column Break"], ans: 1 },
+      { id: 12, title: "ด่าน 12: ภารกิจประยุกต์", q: "ฟังก์ชันใดใช้สร้างจดหมายเวียนเพื่อส่งเกียรติบัตรหรือเอกสารให้คนจำนวนมาก", pts: 3, opt: ["A. References", "B. Review", "C. Mailings", "D. Add-ins"], ans: 2 }
+    ];
+
+    let playerName = "";
+    let score = 0;
+    let currentStage = 0;
+    let progress = 0; // 0.0 ถึง 12.0
+    let isModalOpen = false;
+
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    function startGame() {
+      const nameInput = document.getElementById("player-name").value.trim();
+      if (!nameInput) {
+        alert("กรุณากรอกชื่อก่อนเริ่มเล่นครับ");
+        return;
+      }
+      playerName = nameInput;
+      document.getElementById("hud-name").innerText = `👤 ${playerName}`;
+      document.getElementById("start-screen").style.display = "none";
+    }
+
+    // Controls
+    let moveForward = false;
+    let moveBack = false;
+
+    window.addEventListener("keydown", e => {
+      if (e.key === "ArrowUp" || e.key === "ArrowRight") moveForward = true;
+      if (e.key === "ArrowDown" || e.key === "ArrowLeft") moveBack = true;
+    });
+    window.addEventListener("keyup", e => {
+      if (e.key === "ArrowUp" || e.key === "ArrowRight") moveForward = false;
+      if (e.key === "ArrowDown" || e.key === "ArrowLeft") moveBack = false;
+    });
+
+    const fBtn = document.getElementById("btn-forward");
+    const bBtn = document.getElementById("btn-back");
+    fBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveForward = true; });
+    fBtn.addEventListener("touchend", () => moveForward = false);
+    bBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveBack = true; });
+    bBtn.addEventListener("touchend", () => moveBack = false);
+
+    // Map Path Nodes (12 Checkpoints + Start)
+    function getRoadNode(index) {
+      const w = canvas.width;
+      const h = canvas.height;
+      const paddingX = w * 0.1;
+      const stepY = (h - 180) / 12;
+      const y = (h - 90) - (index * stepY);
+      const isEven = index % 2 === 0;
+      const x = isEven ? paddingX + (w * 0.15) : w - paddingX - (w * 0.15);
+      return { x, y };
+    }
+
+    function update() {
+      if (!isModalOpen && currentStage < 12) {
+        if (moveForward) {
+          progress += 0.04;
+          if (progress >= currentStage + 1) {
+            progress = currentStage + 1;
+            openQuiz(currentStage);
+          }
+        }
+        if (moveBack) {
+          progress -= 0.04;
+          if (progress < currentStage) progress = currentStage;
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // เส้นถนนเชื่อมต่อ
+      ctx.beginPath();
+      ctx.lineWidth = 40;
+      ctx.strokeStyle = "#334155";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      for (let i = 0; i <= 12; i++) {
+        const node = getRoadNode(i);
+        if (i === 0) ctx.moveTo(node.x, node.y);
+        else ctx.lineTo(node.x, node.y);
+      }
+      ctx.stroke();
+
+      // เส้นประกลางถนน
+      ctx.beginPath();
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 10]);
+      ctx.strokeStyle = "#facc15";
+      for (let i = 0; i <= 12; i++) {
+        const node = getRoadNode(i);
+        if (i === 0) ctx.moveTo(node.x, node.y);
+        else ctx.lineTo(node.x, node.y);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // วาด Checkpoints
+      for (let i = 1; i <= 12; i++) {
+        const node = getRoadNode(i);
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 18, 0, Math.PI * 2);
+        ctx.fillStyle = i <= currentStage ? "#22c55e" : "#64748b";
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#ffffff";
+        ctx.stroke();
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 12px Kanit";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(i, node.x, node.y);
+      }
+
+      // ตำแหน่งรถตาม Progress
+      const baseIndex = Math.floor(progress);
+      const nextIndex = Math.min(baseIndex + 1, 12);
+      const factor = progress - baseIndex;
+      const p1 = getRoadNode(baseIndex);
+      const p2 = getRoadNode(nextIndex);
+      const carX = p1.x + (p2.x - p1.x) * factor;
+      const carY = p1.y + (p2.y - p1.y) * factor;
+
+      // รถมินิมอล
+      ctx.save();
+      ctx.translate(carX, carY);
+      ctx.fillStyle = "#ef4444";
+      ctx.fillRect(-12, -18, 24, 36);
+      ctx.fillStyle = "#38bdf8";
+      ctx.fillRect(-9, -8, 18, 12);
+      ctx.restore();
+
+      update();
+      requestAnimationFrame(draw);
+    }
+    requestAnimationFrame(draw);
+
+    function openQuiz(stageIdx) {
+      isModalOpen = true;
+      const qData = questions[stageIdx];
+      document.getElementById("q-tag").innerText = `Checkpoint ${stageIdx + 1} (${qData.pts} คะแนน)`;
+      document.getElementById("q-title").innerText = `${qData.title}\n\n${qData.q}`;
+      
+      const optContainer = document.getElementById("q-options");
+      optContainer.innerHTML = "";
+      qData.opt.forEach((text, idx) => {
+        const b = document.createElement("button");
+        b.className = "opt-btn";
+        b.innerText = text;
+        b.onclick = () => answerQuestion(idx);
+        optContainer.appendChild(b);
+      });
+
+      document.getElementById("quiz-modal").style.display = "flex";
+    }
+
+    function answerQuestion(selectedIdx) {
+      const qData = questions[currentStage];
+      if (selectedIdx === qData.ans) {
+        score += qData.pts;
+        alert("🎉 ยอดเยี่ยม! คำตอบถูกต้อง");
+      } else {
+        alert("❌ ยังไม่ถูกต้อง พยายามใหม่ในรอบถัดไปนะครับ");
+      }
+
+      document.getElementById("quiz-modal").style.display = "none";
+      currentStage++;
+      document.getElementById("hud-stage").innerText = `ด่าน: ${Math.min(currentStage + 1, 12)}/12`;
+      document.getElementById("hud-score").innerText = `คะแนน: ${score}/20`;
+      isModalOpen = false;
+
+      if (currentStage >= 12) {
+        finishGame();
+      }
+    }
+
+    function finishGame() {
+      document.getElementById("end-screen").style.display = "flex";
+      document.getElementById("final-score").innerText = `${score} / 20 คะแนน`;
+      sendScoreToSheet();
+    }
+
+    function sendScoreToSheet() {
+      if (!SCRIPT_URL || SCRIPT_URL.includes("YOUR_GOOGLE_SCRIPT")) {
+        document.getElementById("save-status").innerText = "ระบบจำลอง: บันทึกข้อมูลสำเร็จ (ยังไม่ได้เชื่อมต่อ Sheet URL)";
+        return;
+      }
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: playerName,
+          score: score,
+          total: 20,
+          status: score >= 12 ? "ผ่านเกณฑ์" : "ควรปรับปรุง"
+        })
+      })
+      .then(() => {
+        document.getElementById("save-status").innerText = "✅ บันทึกคะแนนเข้าสู่ระบบคุณครูเรียบร้อยแล้ว";
+      })
+      .catch(() => {
+        document.getElementById("save-status").innerText = "⚠️ ส่งคะแนนไม่สำเร็จ โปรดบันทึกภาพหน้าจอส่งคุณครู";
+      });
+    }
+  </script>
+</body>
+</html>
