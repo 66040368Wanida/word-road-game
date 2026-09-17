@@ -407,14 +407,7 @@
   </div>
 
   <script>
-    // วาง Web App URL ที่ได้จากการ Deploy Google Apps Script ที่นี่
-    const SCRIPT_URL = "YOUR_GOOGLE_SCRIPT_WEB_APP_URL";
-
-    // ปรับการกระจายคะแนนตามความยาก:
-    // ด่าน 1-4 (ง่าย): 1.0 คะแนน x 4 = 4.0
-    // ด่าน 5-8 (ปานกลาง): 1.5 คะแนน x 4 = 6.0
-    // ด่าน 9-12 (ยาก): 2.5 คะแนน x 4 = 10.0
-    // รวมทั้งสิ้น 20.0 คะแนนพอดี
+    // การกระจายคะแนนตามความยาก: รวม 20.0 คะแนน
     const missions = [
       {
         id: 1, title: "Checkpoint 1: แถบ Ribbon", badge: "Word Beginner", pts: 1.0,
@@ -1298,21 +1291,18 @@
       const code = `WR3D-${btoa(encodeURIComponent(playerName)).slice(0, 5).toUpperCase()}-${displayScore}PTS-${Date.now().toString().slice(-4)}`;
       document.getElementById("cert-code").innerText = `รหัสยืนยันผลการขับขี่: ${code}`;
 
-      // ส่งข้อมูลไปยัง Google Apps Script อัตโนมัติเมื่อจบเกม
-      if (SCRIPT_URL && !SCRIPT_URL.includes("YOUR_GOOGLE_SCRIPT")) {
-        fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: playerName,
-            score: displayScore,
-            total: 20,
-            code: code,
-            time: new Date().toLocaleString("th-TH")
-          })
-        }).catch(err => console.error("Error saving score:", err));
-      }
+      // ส่งคะแนนตรงเข้า Google Form อัตโนมัติ (ปลอดภัย 100%)
+      const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScDqf_3sbr3G8XbgR4atsdlcKscqiL_snt7iXLfACcwBjGj1g/formResponse";
+      const formData = new FormData();
+      formData.append("entry.1063080801", playerName);
+      formData.append("entry.557379494", displayScore);
+      formData.append("entry.851103684", code);
+
+      fetch(FORM_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: formData
+      }).catch(err => console.error("Error saving score:", err));
     }
 
     function animate() {
